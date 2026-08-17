@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Rental details · PowerShare</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  
+</head>
+<body class="">
+  <script src="js/main.js"></script>
+  <script src="js/navigation.js"></script>
+  <script src="js/animations.js"></script>
+  <!-- ============ RENTAL DETAILS ============ -->
+  <!-- Shared scripts load first (above) so every per-page inline
+       script below can rely on PowerShare/main.js already being
+       defined, even though those inline scripts run immediately
+       as the parser reaches them (they are not deferred). -->
+  <div class="app-shell">
+    <main class="screen screen--no-nav">
+  <header class="topbar">
+    <a href="#" class="back-btn" data-href="my-rentals.html" aria-label="Go back">
+      <span class="material-icons-outlined">arrow_back</span>
+    </a>
+    <h2>Rental agreement</h2>
+    <div class="topbar-actions"><span style="width:40px"></span></div>
+  </header>
+      <div class="screen-content" id="rental-root"></div>
+
+      <script>
+        const params = new URLSearchParams(window.location.search);
+        const rental = PowerShare.RENTALS.find(r => r.id === params.get('id')) || PowerShare.RENTALS[0];
+        const battery = PowerShare.findBattery(rental.batteryId);
+        const root = document.getElementById('rental-root');
+        const badgeMap = { active: 'badge-active', upcoming: 'badge-pending', completed: 'badge-completed' };
+        const labelMap = { active: 'Active', upcoming: 'Upcoming', completed: 'Completed' };
+
+        root.innerHTML = `
+          <div class="card" style="text-align:center">
+            <div class="charge-ring" style="--charge-pct:${rental.chargeAtPickup}%;margin:0 auto">
+              <span class="charge-value">${rental.chargeAtPickup}%</span>
+              <span class="charge-label">at pickup</span>
+            </div>
+            <h3 style="margin-top:14px">${battery.name}</h3>
+            <span class="badge ${badgeMap[rental.status]}" style="margin-top:6px">${labelMap[rental.status]}</span>
+          </div>
+
+          <div class="section" style="margin-top:20px">
+            <h3>Rental agreement</h3>
+            <div class="card stack-2" style="margin-top:12px">
+              <div class="row-between"><span class="text-muted">Booking number</span><strong>${rental.id}</strong></div>
+              <div class="row-between"><span class="text-muted">Pickup date</span><strong>${rental.start}</strong></div>
+              <div class="row-between"><span class="text-muted">Return by</span><strong>${rental.end}</strong></div>
+              <div class="row-between"><span class="text-muted">Total paid</span><strong>R${rental.total}</strong></div>
+              <div class="row-between"><span class="text-muted">Deposit</span><strong>R${battery.deposit} (refundable)</strong></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>Battery information</h3>
+            <div class="card stack-2" style="margin-top:12px">
+              <div class="row-between"><span class="text-muted">Capacity</span><strong>${battery.capacity}</strong></div>
+              <div class="row-between"><span class="text-muted">Outputs</span><strong>${battery.outputs}</strong></div>
+              <div class="row-between"><span class="text-muted">Pickup hub</span><strong>${battery.location}</strong></div>
+            </div>
+          </div>
+        `;
+
+        if (rental.status !== 'completed') {
+          const actions = document.createElement('div');
+          actions.className = 'stack-3';
+          actions.style.marginTop = '24px';
+          actions.innerHTML = `
+            <button class="btn btn-outline" id="extend-btn">Extend rental</button>
+            ${rental.status === 'active' ? `<a href="return-battery.html?id=${rental.id}" class="btn btn-primary">Return battery</a>` : ''}
+          `;
+          root.appendChild(actions);
+          document.getElementById('extend-btn').addEventListener('click', () => PowerShare.toast('Extension request sent to support', 'success'));
+        }
+      </script>
+    </main>
+
+  </div>
+  
+</body>
+</html>

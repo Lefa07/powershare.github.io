@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>My Rentals · PowerShare</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  
+</head>
+<body class="">
+  <script src="js/main.js"></script>
+  <script src="js/navigation.js"></script>
+  <script src="js/animations.js"></script>
+  <!-- ============ MY RENTALS ============ -->
+  <!-- Shared scripts load first (above) so every per-page inline
+       script below can rely on PowerShare/main.js already being
+       defined, even though those inline scripts run immediately
+       as the parser reaches them (they are not deferred). -->
+  <div class="app-shell">
+    <main class="screen">
+      <header class="topbar">
+        <span style="width:40px"></span>
+        <h2>My Rentals</h2>
+        <div class="topbar-actions"><span style="width:40px"></span></div>
+      </header>
+      <div class="screen-content">
+        <div class="tab-row" data-panels="rentals">
+          <button class="active" data-target="active">Active</button>
+          <button data-target="upcoming">Upcoming</button>
+          <button data-target="completed">Completed</button>
+        </div>
+
+        <div data-panel-group="rentals" data-panel="active" class="stack-3" style="margin-top:18px" id="panel-active"></div>
+        <div data-panel-group="rentals" data-panel="upcoming" class="stack-3" style="margin-top:18px;display:none" id="panel-upcoming"></div>
+        <div data-panel-group="rentals" data-panel="completed" class="stack-3" style="margin-top:18px;display:none" id="panel-completed"></div>
+      </div>
+
+      <script>
+        function rentalCard(r) {
+          const battery = PowerShare.findBattery(r.batteryId);
+          const badgeMap = { active: 'badge-active', upcoming: 'badge-pending', completed: 'badge-completed' };
+          const labelMap = { active: 'Active', upcoming: 'Upcoming', completed: 'Completed' };
+          return `
+            <a href="rental-details.html?id=${r.id}" class="card rental-card card--hover">
+              <div class="rental-thumb"><span class="material-icons-outlined">${battery.icon}</span></div>
+              <div style="flex:1">
+                <div class="row-between"><h4>${battery.name}</h4><span class="badge ${badgeMap[r.status]}">${labelMap[r.status]}</span></div>
+                <p style="margin-top:2px">${r.id} &middot; ${r.start} &rarr; ${r.end}</p>
+                <div class="row-between" style="margin-top:6px">
+                  <span class="text-muted" style="font-size:12.5px">Total</span>
+                  <strong style="font-size:13.5px">R${r.total}</strong>
+                </div>
+              </div>
+            </a>`;
+        }
+
+        function emptyState(label) {
+          return `<div class="empty-state"><span class="material-icons-outlined">inbox</span><h4>No ${label} rentals</h4><p>Batteries you rent will show up here.</p></div>`;
+        }
+
+        const active = PowerShare.RENTALS.filter(r => r.status === 'active');
+        const upcoming = PowerShare.RENTALS.filter(r => r.status === 'upcoming');
+        const completed = PowerShare.RENTALS.filter(r => r.status === 'completed');
+
+        document.getElementById('panel-active').innerHTML = active.map(rentalCard).join('') || emptyState('active');
+        document.getElementById('panel-upcoming').innerHTML = upcoming.map(rentalCard).join('') || emptyState('upcoming');
+        document.getElementById('panel-completed').innerHTML = completed.map(rentalCard).join('') || emptyState('completed');
+      </script>
+    </main>
+  <nav class="bottom-nav" aria-label="Primary">
+    <a href="home.html" class="">
+      <span class="material-icons-outlined">home</span>
+      Home
+    </a>
+    <a href="battery-catalogue.html" class="">
+      <span class="material-icons-outlined">battery_charging_full</span>
+      Batteries
+    </a>
+    <a href="my-rentals.html" class="active">
+      <span class="material-icons-outlined">receipt_long</span>
+      Rentals
+    </a>
+    <a href="notifications.html" class="">
+      <span class="material-icons-outlined">notifications</span>
+      Notifications<span class="nav-badge" data-unread-count style="display:none"></span>
+    </a>
+    <a href="profile.html" class="">
+      <span class="material-icons-outlined">person</span>
+      Profile
+    </a>
+  </nav>
+  </div>
+  
+</body>
+</html>

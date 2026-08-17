@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports · PowerShare Business</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body class="admin-body">
+  <script src="js/main.js"></script>
+  <script src="js/navigation.js"></script>
+  <script src="js/animations.js"></script>
+  <!-- ============ ADMIN: REPORTS ============ -->
+  <!-- Shared scripts load first (above) so this page's inline
+       rendering script can rely on PowerShare already existing. -->
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <div class="brand">
+        <span class="material-icons" style="color:var(--color-accent)">bolt</span>
+        <span class="name">PowerShare <span style="opacity:.6;font-weight:500">Business</span></span>
+      </div>
+      <nav>
+        <a href="admin-dashboard.html" class="">
+          <span class="material-icons-outlined">dashboard</span>
+          <span class="label">Dashboard</span>
+        </a>
+        <a href="inventory.html" class="">
+          <span class="material-icons-outlined">battery_charging_full</span>
+          <span class="label">Inventory</span>
+        </a>
+        <a href="bookings.html" class="">
+          <span class="material-icons-outlined">event_available</span>
+          <span class="label">Bookings</span>
+        </a>
+        <a href="customers.html" class="">
+          <span class="material-icons-outlined">groups</span>
+          <span class="label">Customers</span>
+        </a>
+        <a href="reports.html" class="active">
+          <span class="material-icons-outlined">bar_chart</span>
+          <span class="label">Reports</span>
+        </a>
+        <a href="business-settings.html" class="">
+          <span class="material-icons-outlined">tune</span>
+          <span class="label">Business Settings</span>
+        </a>
+      </nav>
+      <div class="logout-row">
+        <a href="login.html">
+          <span class="material-icons-outlined">logout</span>
+          <span class="label">Log out</span>
+        </a>
+      </div>
+    </aside>
+    <div class="admin-main">
+      <header class="admin-topbar">
+        <h2>Reports</h2>
+        <div class="row" style="gap:16px">
+          <span class="material-icons-outlined" style="color:var(--color-text-muted)">notifications</span>
+          <div class="row" style="gap:8px">
+            <div style="width:36px;height:36px;border-radius:50%;background:var(--color-primary-light);display:flex;align-items:center;justify-content:center;color:var(--color-primary);font-weight:700;font-family:var(--font-display)">PS</div>
+            <div style="font-size:13px">
+              <div style="font-weight:600">PowerShare Energy</div>
+              <div class="text-muted" style="font-size:11.5px">Business admin</div>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div class="admin-content">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <div class="card">
+            <h3>Revenue — last 6 months</h3>
+            <div class="bar-chart" id="revenue-6m"></div>
+          </div>
+          <div class="card">
+            <h3>Battery utilization by category</h3>
+            <div class="bar-chart" id="utilization-chart"></div>
+          </div>
+        </div>
+
+        <div class="section" style="margin-top:28px">
+          <h3>Monthly reports</h3>
+          <table class="data-table" style="margin-top:14px">
+            <thead><tr><th>Month</th><th>Revenue</th><th>Bookings</th><th>New customers</th><th></th></tr></thead>
+            <tbody id="reports-body"></tbody>
+          </table>
+        </div>
+
+        <script>
+          const months = ['Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
+          const revenue6m = [58, 64, 71, 68, 82, 90];
+          document.getElementById('revenue-6m').innerHTML = revenue6m.map((v, i) => `
+            <div class="bar-col"><div class="bar" style="height:${v}%"></div><span class="bar-label">${months[i]}</span></div>`).join('');
+
+          const utilization = [{ label: 'Compact', value: 65 }, { label: 'Portable', value: 88 }, { label: 'Heavy Duty', value: 72 }];
+          document.getElementById('utilization-chart').innerHTML = utilization.map(d => `
+            <div class="bar-col"><div class="bar" style="height:${d.value}%;background:var(--color-accent-dark)"></div><span class="bar-label">${d.label}</span></div>`).join('');
+
+          const reportRows = [
+            { month: 'June 2026', revenue: 78400, bookings: 214, customers: 38 },
+            { month: 'May 2026', revenue: 71200, bookings: 198, customers: 31 },
+            { month: 'April 2026', revenue: 68900, bookings: 182, customers: 27 }
+          ];
+          document.getElementById('reports-body').innerHTML = reportRows.map(r => `
+            <tr>
+              <td>${r.month}</td><td>R${r.revenue.toLocaleString()}</td><td>${r.bookings}</td><td>${r.customers}</td>
+              <td><a href="#" class="link-more" data-no-transition onclick="PowerShare.toast('Report download simulated in prototype'); return false;">Download PDF</a></td>
+            </tr>`).join('');
+        </script>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

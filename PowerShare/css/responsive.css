@@ -1,0 +1,54 @@
+/* ============================================================
+   PowerShare — Responsive rules
+   The prototype is designed mobile-first at 390×844. These rules
+   only adjust how it's *presented* on larger viewports (so it can
+   be reviewed in a normal desktop browser) and refine true small
+   phones down to 360px. Admin screens are desktop-first instead,
+   since back-office tools are used on larger screens.
+   ============================================================ */
+
+/* Small phones */
+@media (max-width: 360px) {
+  .screen-content { padding: var(--sp-3); }
+  .quick-actions { gap: var(--sp-1); }
+  h1 { font-size: 24px; }
+}
+
+/* Desktop / tablet review mode for customer-facing screens:
+   float the phone frame on the page background so reviewers on a
+   laptop see it as a device mock rather than a stretched layout. */
+@media (min-width: 520px) {
+  body:not(.admin-body) {
+    background: #E4E4E4;
+    padding: 40px 0;
+  }
+  .app-shell {
+    border-radius: 36px;
+    overflow: hidden;
+    min-height: 844px;
+    border: 8px solid #212121;
+  }
+  .bottom-nav { border-radius: 0 0 28px 28px; }
+}
+
+/* Admin: responsive collapse of sidebar on narrower desktop windows */
+@media (max-width: 900px) {
+  .admin-sidebar { width: 76px; }
+  .admin-sidebar .brand span.name,
+  .admin-sidebar nav a span.label,
+  .admin-sidebar .logout-row span.label { display: none; }
+  .admin-sidebar nav a { justify-content: center; }
+  .admin-sidebar .brand { justify-content: center; padding: 0 var(--sp-2); }
+  .admin-content { padding: var(--sp-4); }
+  .admin-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .admin-shell { flex-direction: column; }
+  .admin-sidebar { width: 100%; height: auto; position: relative; flex-direction: row; align-items: center; padding: var(--sp-3); overflow-x: auto; }
+  .admin-sidebar .brand { margin-bottom: 0; margin-right: var(--sp-3); }
+  .admin-sidebar nav { flex-direction: row; padding: 0; }
+  .admin-sidebar .logout-row { margin-top: 0; margin-left: auto; }
+  .admin-grid { grid-template-columns: 1fr 1fr; }
+  .admin-content { padding: var(--sp-3); }
+}

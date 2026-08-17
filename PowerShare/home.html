@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Home · PowerShare</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  
+</head>
+<body class="">
+  <script src="js/main.js"></script>
+  <script src="js/navigation.js"></script>
+  <script src="js/animations.js"></script>
+  <!-- ============ HOME ============ -->
+  <!-- Shared scripts load first (above) so every per-page inline
+       script below can rely on PowerShare/main.js already being
+       defined, even though those inline scripts run immediately
+       as the parser reaches them (they are not deferred). -->
+  <div class="app-shell">
+    <main class="screen">
+      <div class="home-header">
+        <div class="greeting-row">
+          <div>
+            <div class="greeting-eyebrow">Good afternoon,</div>
+            <div class="greeting-name">Lefa 👋</div>
+          </div>
+          <div class="row" style="gap:10px">
+            <a href="notifications.html" class="icon-btn" aria-label="Notifications">
+              <span class="material-icons-outlined">notifications_none</span>
+              <span class="dot" data-unread-count style="display:none;width:16px;height:16px;font-size:9px;color:#212121;align-items:center;justify-content:center;font-weight:700"></span>
+            </a>
+            <a href="profile.html" class="icon-btn" aria-label="Profile">
+              <span class="material-icons-outlined">person_outline</span>
+            </a>
+          </div>
+        </div>
+        <div class="search-bar">
+          <span class="material-icons-outlined">search</span>
+          <input type="text" placeholder="Search EcoFlow batteries...">
+        </div>
+        <div class="availability-strip">
+          <span class="pulse-dot"></span>
+          <span><strong>Stage 4</strong> load shedding in your area &mdash; 14 batteries available at Claremont Hub right now.</span>
+        </div>
+      </div>
+
+      <div class="screen-content">
+        <div class="section">
+          <div class="section-head"><h3>Quick actions</h3></div>
+          <div class="quick-actions">
+            <a href="battery-catalogue.html" class="quick-action">
+              <span class="qa-icon"><span class="material-icons-outlined">bolt</span></span>
+              <span>Rent now</span>
+            </a>
+            <a href="my-rentals.html" class="quick-action">
+              <span class="qa-icon"><span class="material-icons-outlined">receipt_long</span></span>
+              <span>My rentals</span>
+            </a>
+            <a href="return-battery.html" class="quick-action">
+              <span class="qa-icon"><span class="material-icons-outlined">assignment_return</span></span>
+              <span>Return</span>
+            </a>
+            <a href="customer-support.html" class="quick-action">
+              <span class="qa-icon"><span class="material-icons-outlined">support_agent</span></span>
+              <span>Support</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-head">
+            <h3>Featured batteries</h3>
+            <a href="battery-catalogue.html" class="link-more">See all</a>
+          </div>
+          <div class="hscroll" id="featured-list"></div>
+        </div>
+
+        <div class="section">
+          <div class="section-head"><h3>Promotions</h3></div>
+          <div class="card" style="background:linear-gradient(120deg,#FFF8E1,#FFECB3);border:none">
+            <div class="row" style="gap:12px">
+              <span class="material-icons" style="font-size:36px;color:var(--color-accent-dark)">redeem</span>
+              <div>
+                <h4>Refer a friend, get R50 credit</h4>
+                <p style="margin-top:2px">Share your code with a neighbour on the same street.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-head">
+            <h3>Nearby pickup locations</h3>
+            <a href="battery-catalogue.html" class="link-more">View map</a>
+          </div>
+          <div class="stack-3">
+            <div class="card row-between">
+              <div class="row" style="gap:12px">
+                <span class="material-icons-outlined" style="color:var(--color-primary)">location_on</span>
+                <div><h4>Claremont Hub</h4><p>1.2 km away · Open until 8 PM</p></div>
+              </div>
+              <span class="badge badge-available">14 in stock</span>
+            </div>
+            <div class="card row-between">
+              <div class="row" style="gap:12px">
+                <span class="material-icons-outlined" style="color:var(--color-primary)">location_on</span>
+                <div><h4>Sea Point Hub</h4><p>4.8 km away · Open until 8 PM</p></div>
+              </div>
+              <span class="badge badge-available">9 in stock</span>
+            </div>
+            <div class="card row-between">
+              <div class="row" style="gap:12px">
+                <span class="material-icons-outlined" style="color:var(--color-primary)">location_on</span>
+                <div><h4>Bellville Hub</h4><p>11.4 km away · Open until 6 PM</p></div>
+              </div>
+              <span class="badge badge-low">3 in stock</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        const featuredEl = document.getElementById('featured-list');
+        PowerShare.BATTERIES.filter(b => b.status !== 'unavailable').slice(0, 4).forEach(b => {
+          featuredEl.innerHTML += `
+            <a href="battery-details.html?id=${b.id}" class="featured-card">
+              <span class="material-icons">${b.icon}</span>
+              <span class="eyebrow">${b.category}</span>
+              <h4>${b.name}</h4>
+              <div style="font-family:var(--font-display);font-weight:700">R${b.price}<span style="font-weight:400;font-size:12px"> /day</span></div>
+            </a>`;
+        });
+      </script>
+    </main>
+  <nav class="bottom-nav" aria-label="Primary">
+    <a href="home.html" class="active">
+      <span class="material-icons-outlined">home</span>
+      Home
+    </a>
+    <a href="battery-catalogue.html" class="">
+      <span class="material-icons-outlined">battery_charging_full</span>
+      Batteries
+    </a>
+    <a href="my-rentals.html" class="">
+      <span class="material-icons-outlined">receipt_long</span>
+      Rentals
+    </a>
+    <a href="notifications.html" class="">
+      <span class="material-icons-outlined">notifications</span>
+      Notifications<span class="nav-badge" data-unread-count style="display:none"></span>
+    </a>
+    <a href="profile.html" class="">
+      <span class="material-icons-outlined">person</span>
+      Profile
+    </a>
+  </nav>
+  </div>
+  
+</body>
+</html>
