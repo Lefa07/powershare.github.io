@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Battery details · PowerShare</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  
+</head>
+<body class="">
+  <script src="js/main.js"></script>
+  <script src="js/navigation.js"></script>
+  <script src="js/animations.js"></script>
+  <!-- ============ BATTERY DETAILS ============ -->
+  <!-- Shared scripts load first (above) so every per-page inline
+       script below can rely on PowerShare/main.js already being
+       defined, even though those inline scripts run immediately
+       as the parser reaches them (they are not deferred). -->
+  <div class="app-shell">
+    <main class="screen screen--no-nav">
+  <header class="topbar">
+    <a href="#" class="back-btn" data-href="battery-catalogue.html" aria-label="Go back">
+      <span class="material-icons-outlined">arrow_back</span>
+    </a>
+    <h2>Battery details</h2>
+    <div class="topbar-actions"><span style="width:40px"></span></div>
+  </header>
+      <div class="screen-content" id="details-root">
+        <!-- Populated by JS from the selected battery id -->
+      </div>
+
+      <script>
+        const params = new URLSearchParams(window.location.search);
+        const battery = PowerShare.findBattery(params.get('id')) || PowerShare.BATTERIES[0];
+        const root = document.getElementById('details-root');
+        const chargePct = battery.charge;
+        const statusBadge = battery.status === 'available'
+          ? '<span class="badge badge-available"><span class="material-icons">check_circle</span>Available now</span>'
+          : battery.status === 'low'
+          ? '<span class="badge badge-low"><span class="material-icons">warning</span>Low stock</span>'
+          : '<span class="badge badge-unavailable"><span class="material-icons">block</span>Unavailable</span>';
+
+        root.innerHTML = `
+          <div class="card" style="text-align:center;padding:32px 16px">
+            <span class="material-icons" style="font-size:88px;color:var(--color-primary)">${battery.icon}</span>
+          </div>
+
+          <div class="row-between" style="margin-top:20px">
+            <div>
+              <span class="eyebrow">${battery.category}</span>
+              <h1 style="margin-top:2px">${battery.name}</h1>
+            </div>
+            <div class="charge-ring charge-ring--sm" style="--charge-pct:${chargePct}%">
+              <span class="charge-value">${chargePct}%</span>
+            </div>
+          </div>
+          <div style="margin-top:8px">${statusBadge}</div>
+
+          <div class="card stack-3" style="margin-top:20px">
+            <div class="row-between"><span class="text-muted">Capacity</span><strong>${battery.capacity}</strong></div>
+            <div class="row-between"><span class="text-muted">Outputs</span><strong>${battery.outputs}</strong></div>
+            <div class="row-between"><span class="text-muted">Runtime</span><strong>${battery.runtime}</strong></div>
+            <div class="row-between"><span class="text-muted">Pickup location</span><strong>${battery.location}</strong></div>
+          </div>
+
+          <div class="section" style="margin-top:20px">
+            <h3>Rental cost</h3>
+            <div class="card stack-2" style="margin-top:12px">
+              <div class="row-between"><span class="text-muted">Daily rate</span><strong>R${battery.price} /day</strong></div>
+              <div class="row-between"><span class="text-muted">Refundable deposit</span><strong>R${battery.deposit}</strong></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>What's included</h3>
+            <div class="stack-2" style="margin-top:12px">
+              <div class="row" style="gap:10px"><span class="material-icons-outlined" style="color:var(--color-success)">check</span><span>Fully charged at pickup</span></div>
+              <div class="row" style="gap:10px"><span class="material-icons-outlined" style="color:var(--color-success)">check</span><span>Carry case and charging cable</span></div>
+              <div class="row" style="gap:10px"><span class="material-icons-outlined" style="color:var(--color-success)">check</span><span>24/7 breakdown support</span></div>
+            </div>
+          </div>
+        `;
+
+        const bookBtn = document.createElement('a');
+        bookBtn.className = 'btn btn-primary';
+        bookBtn.style.marginTop = '24px';
+        bookBtn.textContent = battery.status === 'unavailable' ? 'Notify me when available' : 'Book now';
+        bookBtn.href = battery.status === 'unavailable' ? '#' : `booking.html?id=${battery.id}`;
+        if (battery.status === 'unavailable') {
+          bookBtn.addEventListener('click', (e) => { e.preventDefault(); PowerShare.toast('We\'ll notify you when this battery is back in stock'); });
+        }
+        root.appendChild(bookBtn);
+      </script>
+    </main>
+
+  </div>
+  
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventory · PowerShare Business</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body class="admin-body">
+  <script src="js/main.js"></script>
+  <script src="js/navigation.js"></script>
+  <script src="js/animations.js"></script>
+  <!-- ============ ADMIN: INVENTORY ============ -->
+  <!-- Shared scripts load first (above) so this page's inline
+       rendering script can rely on PowerShare already existing. -->
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <div class="brand">
+        <span class="material-icons" style="color:var(--color-accent)">bolt</span>
+        <span class="name">PowerShare <span style="opacity:.6;font-weight:500">Business</span></span>
+      </div>
+      <nav>
+        <a href="admin-dashboard.html" class="">
+          <span class="material-icons-outlined">dashboard</span>
+          <span class="label">Dashboard</span>
+        </a>
+        <a href="inventory.html" class="active">
+          <span class="material-icons-outlined">battery_charging_full</span>
+          <span class="label">Inventory</span>
+        </a>
+        <a href="bookings.html" class="">
+          <span class="material-icons-outlined">event_available</span>
+          <span class="label">Bookings</span>
+        </a>
+        <a href="customers.html" class="">
+          <span class="material-icons-outlined">groups</span>
+          <span class="label">Customers</span>
+        </a>
+        <a href="reports.html" class="">
+          <span class="material-icons-outlined">bar_chart</span>
+          <span class="label">Reports</span>
+        </a>
+        <a href="business-settings.html" class="">
+          <span class="material-icons-outlined">tune</span>
+          <span class="label">Business Settings</span>
+        </a>
+      </nav>
+      <div class="logout-row">
+        <a href="login.html">
+          <span class="material-icons-outlined">logout</span>
+          <span class="label">Log out</span>
+        </a>
+      </div>
+    </aside>
+    <div class="admin-main">
+      <header class="admin-topbar">
+        <h2>Inventory</h2>
+        <div class="row" style="gap:16px">
+          <span class="material-icons-outlined" style="color:var(--color-text-muted)">notifications</span>
+          <div class="row" style="gap:8px">
+            <div style="width:36px;height:36px;border-radius:50%;background:var(--color-primary-light);display:flex;align-items:center;justify-content:center;color:var(--color-primary);font-weight:700;font-family:var(--font-display)">PS</div>
+            <div style="font-size:13px">
+              <div style="font-weight:600">PowerShare Energy</div>
+              <div class="text-muted" style="font-size:11.5px">Business admin</div>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div class="admin-content">
+        <div class="row-between" style="margin-bottom:18px">
+          <div class="chip-row" data-exclusive>
+            <button class="chip active" data-filter="all">All batteries</button>
+            <button class="chip" data-filter="available">Available</button>
+            <button class="chip" data-filter="low">Low stock</button>
+            <button class="chip" data-filter="unavailable">Maintenance</button>
+          </div>
+          <button class="btn btn-primary btn-sm" data-open-sheet="add-battery-sheet">
+            <span class="material-icons-outlined" style="font-size:17px">add</span> Add battery
+          </button>
+        </div>
+        <table class="data-table">
+          <thead><tr><th>Battery</th><th>Category</th><th>Charge</th><th>Status</th><th>Hub</th><th>Daily rate</th></tr></thead>
+          <tbody id="inventory-body"></tbody>
+        </table>
+
+        <div class="overlay" id="add-battery-sheet">
+          <div class="sheet" style="max-width:420px">
+            <div class="sheet-handle"></div>
+            <h3>Add battery to fleet</h3>
+            <div class="field" style="margin-top:16px"><label for="add-name">Model name</label><input type="text" id="add-name" placeholder="EcoFlow DELTA 2"></div>
+            <div class="field-row">
+              <div class="field"><label for="add-capacity">Capacity</label><input type="text" id="add-capacity" placeholder="1024Wh"></div>
+              <div class="field"><label for="add-rate">Daily rate (R)</label><input type="number" id="add-rate" placeholder="180"></div>
+            </div>
+            <div class="field"><label for="add-hub">Assigned hub</label><select id="add-hub"><option>Claremont Hub</option><option>Sea Point Hub</option><option>Bellville Hub</option></select></div>
+            <button class="btn btn-primary" id="add-battery-btn">Add to fleet</button>
+          </div>
+        </div>
+
+        <script>
+          function chargeCell(charge) {
+            return `<div class="row" style="gap:8px"><div class="charge-ring charge-ring--sm" style="--charge-pct:${charge}%"><span class="charge-value" style="font-size:11px">${charge}%</span></div></div>`;
+          }
+          function statusBadge(status) {
+            if (status === 'available') return '<span class="badge badge-available">Available</span>';
+            if (status === 'low') return '<span class="badge badge-low">Low charge</span>';
+            return '<span class="badge badge-unavailable">Maintenance</span>';
+          }
+          function renderInventory(filter) {
+            const list = filter === 'all' ? PowerShare.BATTERIES : PowerShare.BATTERIES.filter(b => b.status === filter);
+            document.getElementById('inventory-body').innerHTML = list.map(b => `
+              <tr>
+                <td><div class="row" style="gap:8px"><span class="material-icons-outlined" style="color:var(--color-primary);font-size:20px">${b.icon}</span>${b.name}</div></td>
+                <td>${b.category}</td>
+                <td>${chargeCell(b.charge)}</td>
+                <td>${statusBadge(b.status)}</td>
+                <td>${b.location}</td>
+                <td>R${b.price}/day</td>
+              </tr>`).join('');
+          }
+          renderInventory('all');
+          document.querySelectorAll('.chip-row[data-exclusive] .chip').forEach(chip => {
+            chip.addEventListener('click', () => renderInventory(chip.getAttribute('data-filter')));
+          });
+          document.getElementById('add-battery-btn').addEventListener('click', () => {
+            document.getElementById('add-battery-sheet').classList.remove('open');
+            PowerShare.toast('Battery added to fleet', 'success');
+          });
+        </script>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

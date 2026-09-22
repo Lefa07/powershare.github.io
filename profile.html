@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Profile · PowerShare</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  
+</head>
+<body class="">
+  <script src="js/main.js"></script>
+  <script src="js/navigation.js"></script>
+  <script src="js/animations.js"></script>
+  <!-- ============ PROFILE ============ -->
+  <!-- Shared scripts load first (above) so every per-page inline
+       script below can rely on PowerShare/main.js already being
+       defined, even though those inline scripts run immediately
+       as the parser reaches them (they are not deferred). -->
+  <div class="app-shell">
+    <main class="screen">
+      <header class="topbar">
+        <span style="width:40px"></span>
+        <h2>Profile</h2>
+        <div class="topbar-actions"><span style="width:40px"></span></div>
+      </header>
+      <div class="screen-content">
+        <div class="card" style="text-align:center">
+          <div style="width:76px;height:76px;border-radius:50%;background:var(--color-primary-light);display:flex;align-items:center;justify-content:center;margin:0 auto;color:var(--color-primary);font-family:var(--font-display);font-weight:700;font-size:26px">LM</div>
+          <h3 style="margin-top:12px">Lefa Mabotja</h3>
+          <p style="margin-top:2px">lefa@gmail.com</p>
+          <button class="btn btn-outline btn-sm" style="width:auto;margin-top:12px" data-open-sheet="edit-sheet">Edit profile</button>
+        </div>
+
+        <div class="section" style="margin-top:24px">
+          <h3>Rental history</h3>
+          <div class="grid-2" style="margin-top:12px">
+            <div class="card" style="text-align:center">
+              <div style="font-family:var(--font-display);font-weight:700;font-size:22px;color:var(--color-primary)">12</div>
+              <span class="text-muted" style="font-size:12.5px">Total rentals</span>
+            </div>
+            <div class="card" style="text-align:center">
+              <div style="font-family:var(--font-display);font-weight:700;font-size:22px;color:var(--color-primary)">R0</div>
+              <span class="text-muted" style="font-size:12.5px">Outstanding balance</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Personal details</h3>
+          <div class="card stack-2" style="margin-top:12px">
+            <div class="row-between"><span class="text-muted">Phone</span><strong>082 456 7890</strong></div>
+            <div class="row-between"><span class="text-muted">Address</span><strong>Claremont, Cape Town</strong></div>
+            <div class="row-between"><span class="text-muted">Member since</span><strong>March 2025</strong></div>
+          </div>
+        </div>
+
+        <div class="section stack-2">
+          <a href="settings.html" class="card row-between card--hover">
+            <div class="row" style="gap:12px"><span class="material-icons-outlined" style="color:var(--color-primary)">settings</span><span>Settings</span></div>
+            <span class="material-icons-outlined text-muted">chevron_right</span>
+          </a>
+          <a href="customer-support.html" class="card row-between card--hover">
+            <div class="row" style="gap:12px"><span class="material-icons-outlined" style="color:var(--color-primary)">support_agent</span><span>Customer support</span></div>
+            <span class="material-icons-outlined text-muted">chevron_right</span>
+          </a>
+          <a href="about.html" class="card row-between card--hover">
+            <div class="row" style="gap:12px"><span class="material-icons-outlined" style="color:var(--color-primary)">info</span><span>About PowerShare</span></div>
+            <span class="material-icons-outlined text-muted">chevron_right</span>
+          </a>
+        </div>
+
+        <a href="login.html" class="btn btn-danger" style="margin-top:8px;background:transparent;color:var(--color-error);border:1.5px solid #FADBD8">
+          <span class="material-icons-outlined" style="font-size:19px">logout</span> Log out
+        </a>
+      </div>
+
+      <div class="overlay" id="edit-sheet">
+        <div class="sheet">
+          <div class="sheet-handle"></div>
+          <h3>Edit profile</h3>
+          <div class="field" style="margin-top:16px"><label for="edit-name">Full name</label><input type="text" id="edit-name" value="Thandiwe Nkosi"></div>
+          <div class="field"><label for="edit-phone">Phone</label><input type="tel" id="edit-phone" value="082 456 7890"></div>
+          <div class="field"><label for="edit-address">Address</label><input type="text" id="edit-address" value="Claremont, Cape Town"></div>
+          <button class="btn btn-primary" id="save-profile-btn">Save changes</button>
+          <button class="btn btn-ghost" data-close-sheet style="margin-top:4px">Cancel</button>
+        </div>
+      </div>
+      <script>
+        document.getElementById('save-profile-btn').addEventListener('click', () => {
+          document.getElementById('edit-sheet').classList.remove('open');
+          PowerShare.toast('Profile updated', 'success');
+        });
+      </script>
+    </main>
+  <nav class="bottom-nav" aria-label="Primary">
+    <a href="home.html" class="">
+      <span class="material-icons-outlined">home</span>
+      Home
+    </a>
+    <a href="battery-catalogue.html" class="">
+      <span class="material-icons-outlined">battery_charging_full</span>
+      Batteries
+    </a>
+    <a href="my-rentals.html" class="">
+      <span class="material-icons-outlined">receipt_long</span>
+      Rentals
+    </a>
+    <a href="notifications.html" class="">
+      <span class="material-icons-outlined">notifications</span>
+      Notifications<span class="nav-badge" data-unread-count style="display:none"></span>
+    </a>
+    <a href="profile.html" class="active">
+      <span class="material-icons-outlined">person</span>
+      Profile
+    </a>
+  </nav>
+  </div>
+  
+</body>
+</html>

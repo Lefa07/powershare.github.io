@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Booking · PowerShare</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  
+</head>
+<body class="">
+  <script src="js/main.js"></script>
+  <script src="js/navigation.js"></script>
+  <script src="js/animations.js"></script>
+  <!-- ============ BOOKING ============ -->
+  <!-- Shared scripts load first (above) so every per-page inline
+       script below can rely on PowerShare/main.js already being
+       defined, even though those inline scripts run immediately
+       as the parser reaches them (they are not deferred). -->
+  <div class="app-shell">
+    <main class="screen screen--no-nav">
+  <header class="topbar">
+    <a href="#" class="back-btn" data-href="battery-details.html" aria-label="Go back">
+      <span class="material-icons-outlined">arrow_back</span>
+    </a>
+    <h2>Booking</h2>
+    <div class="topbar-actions"><span style="width:40px"></span></div>
+  </header>
+      <div class="screen-content">
+        <div class="card row" style="gap:12px" id="summary-card"></div>
+
+        <div class="section" style="margin-top:24px">
+          <h3>Rental dates</h3>
+          <div class="field-row" style="margin-top:12px">
+            <div class="field">
+              <label for="start-date">Pickup date</label>
+              <input type="date" id="start-date">
+            </div>
+            <div class="field">
+              <label for="end-date">Return date</label>
+              <input type="date" id="end-date">
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Pickup or delivery</h3>
+          <div class="tab-row" data-panels="fulfilment" style="margin-top:12px">
+            <button class="active" data-target="pickup">Pickup</button>
+            <button data-target="delivery">Delivery</button>
+          </div>
+          <div data-panel-group="fulfilment" data-panel="pickup" style="margin-top:14px">
+            <div class="card row" style="gap:10px">
+              <span class="material-icons-outlined" style="color:var(--color-primary)">storefront</span>
+              <div><h4 id="pickup-location">Claremont Hub</h4><p>Collect any time during opening hours</p></div>
+            </div>
+          </div>
+          <div data-panel-group="fulfilment" data-panel="delivery" style="margin-top:14px;display:none">
+            <div class="field"><label for="delivery-address">Delivery address</label><input type="text" id="delivery-address" placeholder="Street, suburb, city"></div>
+            <p style="font-size:12.5px">Delivery fee of R60 applies within 15 km of the hub.</p>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Quantity</h3>
+          <div class="card row-between" style="margin-top:12px">
+            <span>Number of batteries</span>
+            <div class="stepper" data-min="1" data-max="4">
+              <button data-step="dec" aria-label="Decrease quantity">&minus;</button>
+              <span class="qty-value">1</span>
+              <button data-step="inc" aria-label="Increase quantity">+</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Price summary</h3>
+          <div class="card stack-2" style="margin-top:12px" id="price-summary"></div>
+        </div>
+      </div>
+
+      <div class="screen-content" style="padding-top:0">
+        <a href="payment.html" class="btn btn-primary" id="continue-btn">Continue to payment</a>
+      </div>
+
+      <script>
+        const params = new URLSearchParams(window.location.search);
+        const battery = PowerShare.findBattery(params.get('id')) || PowerShare.BATTERIES[0];
+        let qty = 1;
+        let days = 4;
+
+        document.getElementById('summary-card').innerHTML = `
+          <span class="material-icons" style="font-size:40px;color:var(--color-primary)">${battery.icon}</span>
+          <div>
+            <span class="eyebrow">${battery.category}</span>
+            <h4>${battery.name}</h4>
+            <p style="margin-top:2px">R${battery.price} /day &middot; R${battery.deposit} deposit</p>
+          </div>`;
+        document.getElementById('pickup-location').textContent = battery.location;
+
+        const start = document.getElementById('start-date');
+        const end = document.getElementById('end-date');
+        const today = new Date();
+        const inFour = new Date(today.getTime() + 4 * 86400000);
+        start.value = today.toISOString().slice(0, 10);
+        end.value = inFour.toISOString().slice(0, 10);
+        start.min = today.toISOString().slice(0, 10);
+
+        function recalcDays() {
+          const s = new Date(start.value);
+          const e = new Date(end.value);
+          const diff = Math.round((e - s) / 86400000);
+          days = diff > 0 ? diff : 1;
+          renderPrice();
+        }
+        start.addEventListener('change', recalcDays);
+        end.addEventListener('change', recalcDays);
+
+        document.querySelector('.stepper').addEventListener('stepchange', (e) => {
+          qty = e.detail.value;
+          renderPrice();
+        });
+
+        function renderPrice() {
+          const rentalCost = battery.price * days * qty;
+          const deposit = battery.deposit * qty;
+          const total = rentalCost + deposit;
+          document.getElementById('price-summary').innerHTML = `
+            <div class="row-between"><span class="text-muted">Rental (${days} day${days > 1 ? 's' : ''} &times; ${qty})</span><strong>R${rentalCost}</strong></div>
+            <div class="row-between"><span class="text-muted">Refundable deposit</span><strong>R${deposit}</strong></div>
+            <div class="divider" style="margin:8px 0"></div>
+            <div class="row-between"><span style="font-weight:700">Total due today</span><strong style="color:var(--color-primary);font-size:17px">R${total}</strong></div>
+          `;
+          PowerShare.store.set('currentBooking', {
+            batteryId: battery.id, batteryName: battery.name, days, qty,
+            rentalCost, deposit, total, start: start.value, end: end.value
+          });
+        }
+        renderPrice();
+      </script>
+    </main>
+
+  </div>
+  
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Settings · PowerShare</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  
+</head>
+<body class="">
+  <script src="js/main.js"></script>
+  <script src="js/navigation.js"></script>
+  <script src="js/animations.js"></script>
+  <!-- ============ SETTINGS ============ -->
+  <!-- Shared scripts load first (above) so every per-page inline
+       script below can rely on PowerShare/main.js already being
+       defined, even though those inline scripts run immediately
+       as the parser reaches them (they are not deferred). -->
+  <div class="app-shell">
+    <main class="screen screen--no-nav">
+  <header class="topbar">
+    <a href="#" class="back-btn" data-href="profile.html" aria-label="Go back">
+      <span class="material-icons-outlined">arrow_back</span>
+    </a>
+    <h2>Settings</h2>
+    <div class="topbar-actions"><span style="width:40px"></span></div>
+  </header>
+      <div class="screen-content">
+        <div class="section">
+          <h3>Appearance</h3>
+          <div class="card row-between" style="margin-top:12px">
+            <div class="row" style="gap:12px"><span class="material-icons-outlined" style="color:var(--color-primary)">dark_mode</span><span>Dark mode</span></div>
+            <label class="switch">
+              <input type="checkbox" id="dark-mode-toggle">
+              <span class="switch-track"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Preferences</h3>
+          <div class="card stack-3" style="margin-top:12px">
+            <div class="row-between">
+              <span>Language</span>
+              <select style="width:auto;padding:8px 12px;border-radius:8px;border:1.5px solid #E0E0E0">
+                <option>English</option><option>Afrikaans</option><option>isiXhosa</option><option>isiZulu</option>
+              </select>
+            </div>
+            <div class="divider" style="margin:0"></div>
+            <div class="row-between">
+              <span>Push notifications</span>
+              <label class="switch"><input type="checkbox" checked><span class="switch-track"></span></label>
+            </div>
+            <div class="divider" style="margin:0"></div>
+            <div class="row-between">
+              <span>Email updates</span>
+              <label class="switch"><input type="checkbox" checked><span class="switch-track"></span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="section stack-2">
+          <a href="about.html" class="card row-between card--hover"><span>Privacy Policy</span><span class="material-icons-outlined text-muted">chevron_right</span></a>
+          <a href="about.html" class="card row-between card--hover"><span>Terms of Service</span><span class="material-icons-outlined text-muted">chevron_right</span></a>
+        </div>
+      </div>
+
+      <style>
+        .switch { position: relative; display: inline-block; width: 44px; height: 26px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .switch-track { position: absolute; inset: 0; background: #E0E0E0; border-radius: 999px; transition: background 200ms; cursor: pointer; }
+        .switch-track::before { content: ''; position: absolute; width: 20px; height: 20px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: transform 200ms; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+        .switch input:checked + .switch-track { background: var(--color-primary); }
+        .switch input:checked + .switch-track::before { transform: translateX(18px); }
+      </style>
+      <script>
+        document.getElementById('dark-mode-toggle').addEventListener('change', function () {
+          PowerShare.toast(this.checked ? 'Dark mode enabled' : 'Dark mode disabled');
+        });
+      </script>
+    </main>
+
+  </div>
+  
+</body>
+</html>

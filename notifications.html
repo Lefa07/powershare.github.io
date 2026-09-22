@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Notifications · PowerShare</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  
+</head>
+<body class="">
+  <script src="js/main.js"></script>
+  <script src="js/navigation.js"></script>
+  <script src="js/animations.js"></script>
+  <!-- ============ NOTIFICATIONS ============ -->
+  <!-- Shared scripts load first (above) so every per-page inline
+       script below can rely on PowerShare/main.js already being
+       defined, even though those inline scripts run immediately
+       as the parser reaches them (they are not deferred). -->
+  <div class="app-shell">
+    <main class="screen">
+      <header class="topbar">
+        <span style="width:40px"></span>
+        <h2>Notifications</h2>
+        <div class="topbar-actions">
+          <button class="btn-icon" id="mark-read-btn" aria-label="Mark all as read">
+            <span class="material-icons-outlined" style="font-size:19px">done_all</span>
+          </button>
+        </div>
+      </header>
+      <div class="screen-content stack-3" id="notif-list" data-stagger></div>
+
+      <script>
+        const iconMap = { reminder: 'schedule', payment: 'payments', promo: 'campaign' };
+        const colorMap = { reminder: 'var(--color-accent-dark)', payment: 'var(--color-success)', promo: 'var(--color-primary)' };
+
+        function renderNotifications() {
+          const list = document.getElementById('notif-list');
+          list.innerHTML = PowerShare.NOTIFICATIONS.map(n => `
+            <div class="card row" style="gap:12px;${n.read ? 'opacity:0.65' : ''}">
+              <span class="material-icons-outlined" style="color:${colorMap[n.type]};font-size:26px">${iconMap[n.type]}</span>
+              <div style="flex:1">
+                <div class="row-between">
+                  <h4>${n.title}</h4>
+                  ${!n.read ? '<span style="width:8px;height:8px;border-radius:50%;background:var(--color-error);flex-shrink:0"></span>' : ''}
+                </div>
+                <p style="margin-top:2px">${n.body}</p>
+                <span class="text-muted" style="font-size:11.5px">${n.time}</span>
+              </div>
+            </div>`).join('');
+        }
+        renderNotifications();
+
+        document.getElementById('mark-read-btn').addEventListener('click', () => {
+          PowerShare.NOTIFICATIONS.forEach(n => n.read = true);
+          renderNotifications();
+          PowerShare.toast('All notifications marked as read', 'success');
+        });
+      </script>
+    </main>
+  <nav class="bottom-nav" aria-label="Primary">
+    <a href="home.html" class="">
+      <span class="material-icons-outlined">home</span>
+      Home
+    </a>
+    <a href="battery-catalogue.html" class="">
+      <span class="material-icons-outlined">battery_charging_full</span>
+      Batteries
+    </a>
+    <a href="my-rentals.html" class="">
+      <span class="material-icons-outlined">receipt_long</span>
+      Rentals
+    </a>
+    <a href="notifications.html" class="active">
+      <span class="material-icons-outlined">notifications</span>
+      Notifications<span class="nav-badge" data-unread-count style="display:none"></span>
+    </a>
+    <a href="profile.html" class="">
+      <span class="material-icons-outlined">person</span>
+      Profile
+    </a>
+  </nav>
+  </div>
+  
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Customer Support · PowerShare</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  
+</head>
+<body class="">
+  <script src="js/main.js"></script>
+  <script src="js/navigation.js"></script>
+  <script src="js/animations.js"></script>
+  <!-- ============ CUSTOMER SUPPORT ============ -->
+  <!-- Shared scripts load first (above) so every per-page inline
+       script below can rely on PowerShare/main.js already being
+       defined, even though those inline scripts run immediately
+       as the parser reaches them (they are not deferred). -->
+  <div class="app-shell">
+    <main class="screen screen--no-nav">
+  <header class="topbar">
+    <a href="#" class="back-btn" data-href="profile.html" aria-label="Go back">
+      <span class="material-icons-outlined">arrow_back</span>
+    </a>
+    <h2>Customer Support</h2>
+    <div class="topbar-actions"><span style="width:40px"></span></div>
+  </header>
+      <div class="screen-content">
+        <div class="grid-2">
+          <a href="https://wa.me/27821234567" target="_blank" class="card card--hover" style="text-align:center">
+            <span class="material-icons-outlined" style="font-size:28px;color:var(--color-success)">chat</span>
+            <h4 style="margin-top:6px">WhatsApp</h4>
+            <p style="margin-top:2px">Chat with us</p>
+          </a>
+          <a href="tel:+27860000000" class="card card--hover" style="text-align:center">
+            <span class="material-icons-outlined" style="font-size:28px;color:var(--color-primary)">call</span>
+            <h4 style="margin-top:6px">Call us</h4>
+            <p style="margin-top:2px">086 000 0000</p>
+          </a>
+          <a href="mailto:support@powershare.co.za" class="card card--hover" style="text-align:center">
+            <span class="material-icons-outlined" style="font-size:28px;color:var(--color-accent-dark)">mail_outline</span>
+            <h4 style="margin-top:6px">Email</h4>
+            <p style="margin-top:2px">support@powershare.co.za</p>
+          </a>
+          <button data-open-sheet="report-sheet" class="card card--hover" style="text-align:center">
+            <span class="material-icons-outlined" style="font-size:28px;color:var(--color-error)">report_problem</span>
+            <h4 style="margin-top:6px">Report a problem</h4>
+            <p style="margin-top:2px">Battery or booking issue</p>
+          </button>
+        </div>
+
+        <div class="section" style="margin-top:24px">
+          <h3>Frequently asked questions</h3>
+          <div class="stack-2" style="margin-top:12px" id="faq-list"></div>
+        </div>
+      </div>
+
+      <div class="overlay" id="report-sheet">
+        <div class="sheet">
+          <div class="sheet-handle"></div>
+          <h3>Report a problem</h3>
+          <div class="field" style="margin-top:16px">
+            <label for="report-booking">Booking number</label>
+            <input type="text" id="report-booking" placeholder="e.g. PS-48213">
+          </div>
+          <div class="field">
+            <label for="report-desc">What went wrong?</label>
+            <textarea id="report-desc" rows="4" placeholder="Describe the issue..."></textarea>
+          </div>
+          <button class="btn btn-primary" id="report-submit">Submit report</button>
+        </div>
+      </div>
+
+      <script>
+        const faqs = [
+          { q: 'How long can I rent a battery for?', a: 'Anywhere from a single day up to 30 days. Longer rentals get a lower daily rate.' },
+          { q: 'What happens if I return it late?', a: 'A late fee of 1.5&times; the daily rate applies per extra day, deducted from your deposit.' },
+          { q: 'Is the deposit refundable?', a: 'Yes, in full, once the battery is returned in the condition it was collected in.' },
+          { q: 'Can I extend an active rental?', a: 'Yes, use the Extend rental button on the rental details screen, subject to availability.' }
+        ];
+        document.getElementById('faq-list').innerHTML = faqs.map((f, i) => `
+          <details class="card">
+            <summary style="font-weight:600;cursor:pointer;list-style:none">${f.q}</summary>
+            <p style="margin-top:8px">${f.a}</p>
+          </details>`).join('');
+
+        document.getElementById('report-submit').addEventListener('click', () => {
+          document.getElementById('report-sheet').classList.remove('open');
+          PowerShare.toast('Report submitted — our team will reach out shortly', 'success');
+        });
+      </script>
+    </main>
+
+  </div>
+  
+</body>
+</html>
