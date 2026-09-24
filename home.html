@@ -45,9 +45,9 @@
           <span class="material-icons-outlined">search</span>
           <input type="text" placeholder="Search EcoFlow batteries...">
         </div>
-        <div class="availability-strip">
+        <div class="availability-strip" id="availability-strip">
           <span class="pulse-dot"></span>
-          <span><strong>Stage 4</strong> load shedding in your area &mdash; 14 batteries available at Claremont Hub right now.</span>
+          <span><strong>Battery availability</strong> <span id="available-battery-count">Checking current inventory…</span></span>
         </div>
       </div>
 
@@ -97,31 +97,27 @@
 
         <div class="section">
           <div class="section-head">
-            <h3>Nearby pickup locations</h3>
-            <a href="battery-catalogue.html" class="link-more">View map</a>
+            <h3>Ready to rent?</h3>
+            <a href="battery-catalogue.html" class="link-more">Browse batteries</a>
           </div>
-          <div class="stack-3">
-            <div class="card row-between">
-              <div class="row" style="gap:12px">
-                <span class="material-icons-outlined" style="color:var(--color-primary)">location_on</span>
-                <div><h4>Claremont Hub</h4><p>1.2 km away · Open until 8 PM</p></div>
+          <div class="card booking-path-card">
+            <div class="booking-path">
+              <div class="booking-step">
+                <span class="booking-step-number">1</span>
+                <div><strong>Choose a battery</strong><p>Browse the batteries currently available.</p></div>
               </div>
-              <span class="badge badge-available">14 in stock</span>
-            </div>
-            <div class="card row-between">
-              <div class="row" style="gap:12px">
-                <span class="material-icons-outlined" style="color:var(--color-primary)">location_on</span>
-                <div><h4>Sea Point Hub</h4><p>4.8 km away · Open until 8 PM</p></div>
+              <span class="material-icons-outlined booking-path-arrow">arrow_forward</span>
+              <div class="booking-step">
+                <span class="booking-step-number">2</span>
+                <div><strong>Set rental dates</strong><p>Select your pickup and return dates.</p></div>
               </div>
-              <span class="badge badge-available">9 in stock</span>
-            </div>
-            <div class="card row-between">
-              <div class="row" style="gap:12px">
-                <span class="material-icons-outlined" style="color:var(--color-primary)">location_on</span>
-                <div><h4>Bellville Hub</h4><p>11.4 km away · Open until 6 PM</p></div>
+              <span class="material-icons-outlined booking-path-arrow">arrow_forward</span>
+              <div class="booking-step">
+                <span class="booking-step-number">3</span>
+                <div><strong>Confirm & pay</strong><p>Review the booking and continue to payment.</p></div>
               </div>
-              <span class="badge badge-low">3 in stock</span>
             </div>
+            <a href="battery-catalogue.html" class="btn btn-primary btn-block" style="margin-top:16px">Find a battery</a>
           </div>
         </div>
       </div>
@@ -147,8 +143,13 @@
           .catch(() => {}); // notifications are a nice-to-have here, not worth failing the page over
 
         const featuredEl = document.getElementById('featured-list');
+        const availabilityCountEl = document.getElementById('available-battery-count');
         PowerShareAPI.getBatteries(true) // availableOnly
           .then((batteries) => {
+            const count = batteries.length;
+            availabilityCountEl.textContent = count === 0
+              ? 'No batteries are currently available to rent.'
+              : `${count} ${count === 1 ? 'battery is' : 'batteries are'} currently available to rent.`;
             featuredEl.innerHTML = batteries.slice(0, 4).map((b) => `
               <a href="battery-details.html?id=${b.id}" class="featured-card">
                 <span class="material-icons">${PowerShareAPI.iconForCategory(b.category.name)}</span>
@@ -161,11 +162,6 @@
             featuredEl.innerHTML = `<p class="text-muted" style="padding:12px 4px">Couldn't load batteries right now.</p>`;
           });
 
-        // NOTE: the "Stage 4 load shedding" strip above and the "Nearby
-        // pickup locations" cards below are still static placeholder
-        // content. The backend doesn't model hubs/locations or live
-        // load-shedding status at all — see the note in the chat for what
-        // a minimal Hub entity would take to wire these up for real.
       </script>
     </main>
   <nav class="bottom-nav" aria-label="Primary">

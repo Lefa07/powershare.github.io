@@ -48,7 +48,7 @@
           <div class="card stack-3" style="margin-top:12px">
             <div class="row-between">
               <span>Language</span>
-              <select style="width:auto;padding:8px 12px;border-radius:8px;border:1.5px solid #E0E0E0">
+              <select id="language-select" aria-label="Language" style="width:auto;padding:8px 12px;border-radius:8px;border:1.5px solid #E0E0E0">
                 <option>English</option><option>Afrikaans</option><option>isiXhosa</option><option>isiZulu</option>
               </select>
             </div>
@@ -79,11 +79,7 @@
         .switch input:checked + .switch-track { background: var(--color-primary); }
         .switch input:checked + .switch-track::before { transform: translateX(18px); }
       </style>
-      <script>
-        document.getElementById('dark-mode-toggle').addEventListener('change', function () {
-          PowerShare.toast(this.checked ? 'Dark mode enabled' : 'Dark mode disabled');
-        });
-      </script>
+      <!-- Theme and language persistence are handled by js/navigation.js. -->
     </main>
 
   </div>

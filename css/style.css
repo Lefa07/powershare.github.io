@@ -268,3 +268,200 @@ p { font-size: 15px; color: var(--color-text-muted); }
 @keyframes shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
 
 .material-icons-outlined, .material-icons { vertical-align: middle; user-select: none; }
+
+
+/* ============================================================
+   User dark mode
+   Applied with .dark-mode on html/body. Admin pages are excluded
+   by navigation.js.
+   ============================================================ */
+html.dark-mode {
+  --color-bg: #121212;
+  --color-secondary: #1E1E1E;
+  --color-text: #F5F5F5;
+  --color-text-muted: #B8B8B8;
+  --color-primary-light: #173D1A;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.28);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.40), 0 2px 4px rgba(0,0,0,0.30);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,0.50), 0 4px 8px rgba(0,0,0,0.35);
+}
+html.dark-mode body {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+html.dark-mode .card,
+html.dark-mode .topbar,
+html.dark-mode .bottom-nav,
+html.dark-mode .search-bar,
+html.dark-mode .sheet,
+html.dark-mode .overlay .sheet {
+  background: var(--color-secondary);
+  color: var(--color-text);
+}
+html.dark-mode .topbar,
+html.dark-mode .bottom-nav {
+  border-color: #333;
+}
+html.dark-mode .field input,
+html.dark-mode .field select,
+html.dark-mode .field textarea,
+html.dark-mode .search-bar input,
+html.dark-mode .chip,
+html.dark-mode #language-select {
+  background: #252525;
+  color: var(--color-text);
+  border-color: #444;
+}
+html.dark-mode .field input::placeholder,
+html.dark-mode .field textarea::placeholder,
+html.dark-mode .search-bar input::placeholder {
+  color: #9E9E9E;
+}
+html.dark-mode .card--flat {
+  border-color: #333;
+}
+html.dark-mode .divider {
+  background: #333;
+  border-color: #333;
+}
+html.dark-mode .btn-ghost:hover {
+  background: rgba(255,255,255,0.08);
+}
+html.dark-mode .btn-outline {
+  color: #81C784;
+  border-color: #81C784;
+}
+html.dark-mode .btn-outline:hover {
+  background: rgba(129,199,132,0.12);
+}
+html.dark-mode .back-btn {
+  background: #252525;
+}
+html.dark-mode .battery-img,
+html.dark-mode .featured-card,
+html.dark-mode .quick-action .qa-icon {
+  background: #252525;
+}
+html.dark-mode .badge-unavailable,
+html.dark-mode .badge-low {
+  background: #332A16;
+}
+html.dark-mode .availability-strip {
+  border-color: rgba(255,255,255,0.20);
+}
+html.dark-mode .overlay {
+  background: rgba(0,0,0,0.72);
+}
+html.dark-mode .switch-track {
+  background: #555;
+}
+html.dark-mode .home-header .search-bar {
+  background: #fff;
+  color: #212121;
+}
+html.dark-mode .home-header .search-bar input {
+  background: transparent;
+  color: #212121;
+}
+html.dark-mode .home-header .search-bar input::placeholder {
+  color: #6B6B6B;
+}
+
+/* Booking flow */
+.booking-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.booking-progress-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.booking-progress-step span {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #E0E0E0;
+  color: #616161;
+  font-size: 12px;
+  font-weight: 700;
+}
+.booking-progress-step.active span {
+  background: var(--color-primary);
+  color: #fff;
+}
+.booking-progress-step small {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  line-height: 1.15;
+}
+.booking-progress-line {
+  height: 1px;
+  flex: 1;
+  min-width: 10px;
+  background: #D6D6D6;
+}
+.booking-flow-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border-radius: var(--radius-md);
+  background: var(--color-primary-light);
+  color: var(--color-text);
+  font-size: 13px;
+}
+.booking-flow-note .material-icons-outlined {
+  color: var(--color-primary);
+  font-size: 20px;
+  flex: 0 0 auto;
+}
+.booking-path {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.booking-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  flex: 1;
+}
+.booking-step-number {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-weight: 700;
+  font-size: 12px;
+}
+.booking-step strong {
+  display: block;
+  font-size: 13px;
+}
+.booking-step p {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+.booking-path-arrow {
+  color: var(--color-text-muted);
+  font-size: 18px;
+}
+@media (max-width: 520px) {
+  .booking-path { display: block; }
+  .booking-step { margin-bottom: 12px; }
+  .booking-path-arrow { display: none; }
+  .booking-progress-step small { display: none; }
+}
