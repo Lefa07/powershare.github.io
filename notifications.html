@@ -14,6 +14,7 @@
   
 </head>
 <body class="">
+  <script src="js/powershare-api.js"></script>
   <script src="js/main.js"></script>
   <script src="js/navigation.js"></script>
   <script src="js/animations.js"></script>
@@ -36,30 +37,30 @@
       <div class="screen-content stack-3" id="notif-list" data-stagger></div>
 
       <script>
-        const iconMap = { reminder: 'schedule', payment: 'payments', promo: 'campaign' };
-        const colorMap = { reminder: 'var(--color-accent-dark)', payment: 'var(--color-success)', promo: 'var(--color-primary)' };
+        const iconMap = { BOOKING_CREATED: 'event', BOOKING_APPROVED: 'check_circle', BOOKING_REJECTED: 'cancel', PAYMENT_SUCCESSFUL: 'payments' };
+        const colorMap = { BOOKING_CREATED: 'var(--color-accent-dark)', BOOKING_APPROVED: 'var(--color-success)', BOOKING_REJECTED: 'var(--color-error)', PAYMENT_SUCCESSFUL: 'var(--color-primary)' };
 
-        function renderNotifications() {
-          const list = document.getElementById('notif-list');
-          list.innerHTML = PowerShare.NOTIFICATIONS.map(n => `
-            <div class="card row" style="gap:12px;${n.read ? 'opacity:0.65' : ''}">
-              <span class="material-icons-outlined" style="color:${colorMap[n.type]};font-size:26px">${iconMap[n.type]}</span>
-              <div style="flex:1">
-                <div class="row-between">
-                  <h4>${n.title}</h4>
-                  ${!n.read ? '<span style="width:8px;height:8px;border-radius:50%;background:var(--color-error);flex-shrink:0"></span>' : ''}
-                </div>
-                <p style="margin-top:2px">${n.body}</p>
-                <span class="text-muted" style="font-size:11.5px">${n.time}</span>
-              </div>
-            </div>`).join('');
+        function renderNotifications(list) {
+          const root = document.getElementById('notif-list');
+          root.innerHTML = list.length ? list.map(n => `
+            <div class="card row" style="gap:12px;${n.isRead ? 'opacity:0.65' : ''}">
+              <span class="material-icons-outlined" style="color:${colorMap[n.type] || 'var(--color-primary)'};font-size:26px">${iconMap[n.type] || 'notifications'}</span>
+              <div style="flex:1"><div class="row-between"><h4>${n.type.replaceAll('_', ' ')}</h4>${!n.isRead ? '<span style="width:8px;height:8px;border-radius:50%;background:var(--color-error);flex-shrink:0"></span>' : ''}</div><p style="margin-top:2px">${n.message}</p><span class="text-muted" style="font-size:11.5px">${new Date(n.createdAt).toLocaleString('en-ZA')}</span></div>
+            </div>`).join('') : '<div class="empty-state"><span class="material-icons-outlined">notifications_none</span><h4>No notifications</h4><p>You are all caught up.</p></div>';
         }
-        renderNotifications();
 
-        document.getElementById('mark-read-btn').addEventListener('click', () => {
-          PowerShare.NOTIFICATIONS.forEach(n => n.read = true);
-          renderNotifications();
-          PowerShare.toast('All notifications marked as read', 'success');
+        let notifications = [];
+        PowerShareAPI.getMyNotifications(false)
+          .then(data => { notifications = data || []; renderNotifications(notifications); })
+          .catch(() => { document.getElementById('notif-list').innerHTML = '<div class="empty-state"><h4>Could not load notifications</h4></div>'; });
+
+        document.getElementById('mark-read-btn').addEventListener('click', async () => {
+          try {
+            await Promise.all(notifications.filter(n => !n.isRead).map(n => PowerShareAPI.markNotificationRead(n.id)));
+            notifications.forEach(n => n.isRead = true);
+            renderNotifications(notifications);
+            PowerShare.toast('All notifications marked as read', 'success');
+          } catch (err) { PowerShare.toast(err.message || 'Could not update notifications', 'error'); }
         });
       </script>
     </main>

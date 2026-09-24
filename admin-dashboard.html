@@ -61,7 +61,7 @@
       <header class="admin-topbar">
         <h2>Dashboard</h2>
         <div class="row" style="gap:16px">
-          <span class="material-icons-outlined" style="color:var(--color-text-muted)">notifications</span>
+          <span class="material-icons-outlined" id="admin-notification-icon" style="color:var(--color-text-muted);cursor:pointer;position:relative" title="Admin notifications">notifications</span>
           <div class="row" style="gap:8px">
             <div style="width:36px;height:36px;border-radius:50%;background:var(--color-primary-light);display:flex;align-items:center;justify-content:center;color:var(--color-primary);font-weight:700;font-family:var(--font-display)">PS</div>
             <div style="font-size:13px">
@@ -140,7 +140,29 @@
           };
           function titleCase(s) { return s.charAt(0) + s.slice(1).toLowerCase(); }
 
+          let knownAdminNotificationIds = new Set();
+          let dashboardLoadedOnce = false;
+
           function loadDashboard() {
+            PowerShareAPI.getMyNotifications(true).then((notifications) => {
+              const icon = document.getElementById('admin-notification-icon');
+              if (notifications.length) {
+                icon.textContent = 'notifications_active';
+                icon.title = `${notifications.length} unread admin notification${notifications.length === 1 ? '' : 's'}`;
+                icon.style.color = 'var(--color-accent-dark)';
+                icon.onclick = () => PowerShare.toast(notifications[0].message, 'default', 'notifications');
+                if (dashboardLoadedOnce) {
+                  const newNotification = notifications.find(n => !knownAdminNotificationIds.has(n.id));
+                  if (newNotification) PowerShare.toast(newNotification.message, 'default', 'notifications');
+                }
+                knownAdminNotificationIds = new Set(notifications.map(n => n.id));
+              } else {
+                icon.textContent = 'notifications';
+                icon.title = 'No unread admin notifications';
+                icon.style.color = 'var(--color-text-muted)';
+              }
+            }).catch(() => {});
+
             PowerShareAPI.admin.dashboardStats()
               .then((stats) => {
                 document.getElementById('stat-revenue').textContent = `R${stats.revenue}`;
@@ -175,7 +197,11 @@
                 document.getElementById('recent-bookings').innerHTML =
                   '<tr><td colspan="5" style="text-align:center;color:var(--color-text-muted);padding:24px">Could not load bookings</td></tr>';
               });
+
+            dashboardLoadedOnce = true;
           }
+
+          setInterval(loadDashboard, 15000);
         </script>
       </div>
     </div>

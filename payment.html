@@ -14,6 +14,7 @@
   
 </head>
 <body class="">
+  <script src="js/powershare-api.js"></script>
   <script src="js/main.js"></script>
   <script src="js/navigation.js"></script>
   <script src="js/animations.js"></script>
@@ -81,26 +82,35 @@
       <script>
         const booking = PowerShare.store.get('currentBooking');
         const summaryEl = document.getElementById('booking-summary');
-        if (booking) {
+        if (booking?.bookingId) {
           summaryEl.innerHTML = `
+            <div class="row-between"><span class="text-muted">Booking</span><strong>#${booking.bookingId}</strong></div>
             <div class="row-between"><span class="text-muted">Battery</span><strong>${booking.batteryName}</strong></div>
-            <div class="row-between"><span class="text-muted">Dates</span><strong>${booking.start} &rarr; ${booking.end}</strong></div>
+            <div class="row-between"><span class="text-muted">Dates</span><strong>${booking.start} → ${booking.end}</strong></div>
             <div class="divider" style="margin:8px 0"></div>
-            <div class="row-between"><span style="font-weight:700">Total due</span><strong style="color:var(--color-primary);font-size:17px">R${booking.total}</strong></div>
-          `;
+            <div class="row-between"><span style="font-weight:700">Total</span><strong style="color:var(--color-primary);font-size:17px">R${Number(booking.total || 0).toFixed(2)}</strong></div>`;
         } else {
-          summaryEl.innerHTML = '<p>No active booking &mdash; head back to the catalogue to start one.</p>';
+          summaryEl.innerHTML = '<p>No active booking. Please return to the battery catalogue.</p>';
+          document.getElementById('pay-btn').disabled = true;
         }
 
         document.querySelectorAll('input[name="pay"]').forEach(radio => {
-          radio.addEventListener('change', () => {
-            document.getElementById('card-fields').style.display = radio.value === 'card' ? '' : 'none';
-          });
+          radio.addEventListener('change', () => { document.getElementById('card-fields').style.display = radio.value === 'card' ? '' : 'none'; });
         });
 
-        document.getElementById('pay-btn').addEventListener('click', () => {
-          PowerShare.toast('Processing payment...', 'default', 'hourglass_top');
-          setTimeout(() => { window.location.href = 'booking-confirmation.html'; }, 900);
+        document.getElementById('pay-btn').addEventListener('click', async () => {
+          if (!booking?.bookingId) return;
+          const method = document.querySelector('input[name="pay"]:checked')?.value?.toUpperCase();
+          const btn = document.getElementById('pay-btn');
+          btn.disabled = true; btn.textContent = 'Processing…';
+          try {
+            await PowerShareAPI.pay(booking.bookingId, method);
+            PowerShare.store.set('currentBooking', { ...booking, paymentMethod: method, paymentCompleted: true });
+            window.location.href = 'booking-confirmation.html';
+          } catch (err) {
+            PowerShare.toast(err.message || 'Payment could not be processed', 'error');
+            btn.disabled = false; btn.textContent = 'Pay now';
+          }
         });
       </script>
     </main>

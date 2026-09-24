@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body class="admin-body">
+  <script src="js/powershare-api.js"></script>
   <script src="js/main.js"></script>
   <script src="js/navigation.js"></script>
   <script src="js/animations.js"></script>
@@ -85,16 +86,42 @@
         </table>
 
         <script>
+          let customers = [];
+
           function renderCustomers(query) {
-            const q = (query || '').toLowerCase();
-            const list = PowerShare.CUSTOMERS.filter(c => !q || c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q));
-            document.getElementById('customers-body').innerHTML = list.map(c => `
-              <tr>
-                <td>${c.id}</td><td>${c.name}</td><td>${c.email}</td><td>${c.rentals}</td>
-                <td>${c.outstanding > 0 ? `<span class="badge badge-pending">R${c.outstanding} due</span>` : '<span class="badge badge-available">Settled</span>'}</td>
-              </tr>`).join('') || `<tr><td colspan="5" style="text-align:center;color:var(--color-text-muted);padding:24px">No customers match "${query}"</td></tr>`;
+            const q = (query || '').trim().toLowerCase();
+            const list = customers.filter(c => {
+              const name = `${c.firstName} ${c.lastName}`;
+              return !q || name.toLowerCase().includes(q) || (c.email || '').toLowerCase().includes(q);
+            });
+            document.getElementById('customers-body').innerHTML = list.map(c => {
+              const name = `${c.firstName} ${c.lastName}`;
+              const outstanding = Number(c.outstandingBalance || 0);
+              return `
+                <tr>
+                  <td>${c.id}</td>
+                  <td>${name}</td>
+                  <td>${c.email || '—'}</td>
+                  <td>${c.totalRentals ?? 0}</td>
+                  <td>${outstanding > 0 ? `<span class="badge badge-pending">R${outstanding.toFixed(2)} due</span>` : '<span class="badge badge-available">Settled</span>'}</td>
+                </tr>`;
+            }).join('') || `<tr><td colspan="5" style="text-align:center;color:var(--color-text-muted);padding:24px">No customers match "${query || ''}"</td></tr>`;
           }
-          renderCustomers('');
+
+          PowerShareAPI.getMyProfile()
+            .then(user => {
+              if (!user || user.role !== 'ADMIN') { window.location.href = 'home.html'; return null; }
+              return PowerShareAPI.admin.listUsers();
+            })
+            .then(data => {
+              if (!data) return;
+              customers = data;
+              renderCustomers('');
+            })
+            .catch(() => {
+              document.getElementById('customers-body').innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--color-text-muted);padding:24px">Could not load customer data</td></tr>';
+            });
+
           document.getElementById('customer-search').addEventListener('input', (e) => renderCustomers(e.target.value));
         </script>
       </div>

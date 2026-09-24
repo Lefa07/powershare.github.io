@@ -14,6 +14,7 @@
   
 </head>
 <body class="">
+  <script src="js/powershare-api.js"></script>
   <script src="js/main.js"></script>
   <script src="js/navigation.js"></script>
   <script src="js/animations.js"></script>
@@ -31,9 +32,9 @@
       </header>
       <div class="screen-content">
         <div class="card" style="text-align:center">
-          <div style="width:76px;height:76px;border-radius:50%;background:var(--color-primary-light);display:flex;align-items:center;justify-content:center;margin:0 auto;color:var(--color-primary);font-family:var(--font-display);font-weight:700;font-size:26px">LM</div>
-          <h3 style="margin-top:12px">Lefa Mabotja</h3>
-          <p style="margin-top:2px">lefa@gmail.com</p>
+          <div id="profile-avatar" style="width:76px;height:76px;border-radius:50%;background:var(--color-primary-light);display:flex;align-items:center;justify-content:center;margin:0 auto;color:var(--color-primary);font-family:var(--font-display);font-weight:700;font-size:26px">PS</div>
+          <h3 style="margin-top:12px" id="profile-name">Loading…</h3>
+          <p style="margin-top:2px" id="profile-email">—</p>
           <button class="btn btn-outline btn-sm" style="width:auto;margin-top:12px" data-open-sheet="edit-sheet">Edit profile</button>
         </div>
 
@@ -41,11 +42,11 @@
           <h3>Rental history</h3>
           <div class="grid-2" style="margin-top:12px">
             <div class="card" style="text-align:center">
-              <div style="font-family:var(--font-display);font-weight:700;font-size:22px;color:var(--color-primary)">12</div>
+              <div id="profile-rental-count" style="font-family:var(--font-display);font-weight:700;font-size:22px;color:var(--color-primary)">—</div>
               <span class="text-muted" style="font-size:12.5px">Total rentals</span>
             </div>
             <div class="card" style="text-align:center">
-              <div style="font-family:var(--font-display);font-weight:700;font-size:22px;color:var(--color-primary)">R0</div>
+              <div id="profile-outstanding" style="font-family:var(--font-display);font-weight:700;font-size:22px;color:var(--color-primary)">—</div>
               <span class="text-muted" style="font-size:12.5px">Outstanding balance</span>
             </div>
           </div>
@@ -54,9 +55,9 @@
         <div class="section">
           <h3>Personal details</h3>
           <div class="card stack-2" style="margin-top:12px">
-            <div class="row-between"><span class="text-muted">Phone</span><strong>082 456 7890</strong></div>
-            <div class="row-between"><span class="text-muted">Address</span><strong>Claremont, Cape Town</strong></div>
-            <div class="row-between"><span class="text-muted">Member since</span><strong>March 2025</strong></div>
+            <div class="row-between"><span class="text-muted">Phone</span><strong id="profile-phone">—</strong></div>
+            <div class="row-between"><span class="text-muted">Address</span><strong id="profile-address">—</strong></div>
+            <div class="row-between"><span class="text-muted">Member since</span><strong id="profile-member-since">—</strong></div>
           </div>
         </div>
 
@@ -75,26 +76,72 @@
           </a>
         </div>
 
-        <a href="login.html" class="btn btn-danger" style="margin-top:8px;background:transparent;color:var(--color-error);border:1.5px solid #FADBD8">
+        <button id="profile-logout" class="btn btn-danger" style="margin-top:8px;background:transparent;color:var(--color-error);border:1.5px solid #FADBD8">
           <span class="material-icons-outlined" style="font-size:19px">logout</span> Log out
-        </a>
+        </button>
       </div>
 
       <div class="overlay" id="edit-sheet">
         <div class="sheet">
           <div class="sheet-handle"></div>
           <h3>Edit profile</h3>
-          <div class="field" style="margin-top:16px"><label for="edit-name">Full name</label><input type="text" id="edit-name" value="Thandiwe Nkosi"></div>
-          <div class="field"><label for="edit-phone">Phone</label><input type="tel" id="edit-phone" value="082 456 7890"></div>
-          <div class="field"><label for="edit-address">Address</label><input type="text" id="edit-address" value="Claremont, Cape Town"></div>
+          <div class="field" style="margin-top:16px"><label for="edit-first-name">First name</label><input type="text" id="edit-first-name"></div>
+          <div class="field"><label for="edit-last-name">Last name</label><input type="text" id="edit-last-name"></div>
+          <div class="field"><label for="edit-phone">Phone</label><input type="tel" id="edit-phone"></div>
+          <div class="field"><label for="edit-address">Address</label><input type="text" id="edit-address"></div>
           <button class="btn btn-primary" id="save-profile-btn">Save changes</button>
           <button class="btn btn-ghost" data-close-sheet style="margin-top:4px">Cancel</button>
         </div>
       </div>
       <script>
+        let currentProfile = null;
+        const fullName = u => `${u.firstName || ''} ${u.lastName || ''}`.trim();
+        const initials = u => `${(u.firstName || 'P')[0]}${(u.lastName || 'S')[0]}`.toUpperCase();
+
+        function renderProfile(user) {
+          currentProfile = user;
+          document.getElementById('profile-avatar').textContent = initials(user);
+          document.getElementById('profile-name').textContent = fullName(user) || 'Customer';
+          document.getElementById('profile-email').textContent = user.email || '—';
+          document.getElementById('profile-phone').textContent = user.phone || '—';
+          document.getElementById('profile-address').textContent = user.address || '—';
+          document.getElementById('profile-member-since').textContent = user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-ZA', { month: 'long', year: 'numeric' }) : '—';
+          document.getElementById('edit-first-name').value = user.firstName || '';
+          document.getElementById('edit-last-name').value = user.lastName || '';
+          document.getElementById('edit-phone').value = user.phone || '';
+          document.getElementById('edit-address').value = user.address || '';
+        }
+
+        PowerShareAPI.getMyProfile()
+          .then(renderProfile)
+          .catch(() => { PowerShare.toast('Could not load your profile', 'error'); });
+
         document.getElementById('save-profile-btn').addEventListener('click', () => {
-          document.getElementById('edit-sheet').classList.remove('open');
-          PowerShare.toast('Profile updated', 'success');
+          const btn = document.getElementById('save-profile-btn');
+          const payload = {
+            firstName: document.getElementById('edit-first-name').value.trim(),
+            lastName: document.getElementById('edit-last-name').value.trim(),
+            phone: document.getElementById('edit-phone').value.trim() || null,
+            address: document.getElementById('edit-address').value.trim() || null
+          };
+          if (!payload.firstName || !payload.lastName) {
+            PowerShare.toast('First name and last name are required', 'error');
+            return;
+          }
+          btn.disabled = true; btn.textContent = 'Saving…';
+          PowerShareAPI.updateMyProfile(payload)
+            .then(updated => {
+              renderProfile(updated);
+              document.getElementById('edit-sheet').classList.remove('open');
+              PowerShare.toast('Profile updated', 'success');
+            })
+            .catch(err => PowerShare.toast(err.message || 'Could not update profile', 'error'))
+            .finally(() => { btn.disabled = false; btn.textContent = 'Save changes'; });
+        });
+
+        document.getElementById('profile-logout').addEventListener('click', () => {
+          PowerShareAPI.logout();
+          window.location.href = 'login.html';
         });
       </script>
     </main>

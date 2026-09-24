@@ -42,37 +42,9 @@ const PowerShare = (() => {
     { id: 5, type: 'promo', title: 'Refer a friend, get R50', body: 'Share your code with neighbours and both of you get credit.', time: '5 days ago', read: true }
   ];
 
-  const CUSTOMERS = [
-    { id: 'C-1042', name: 'Thandiwe Nkosi', email: 'thandiwe.nkosi@example.co.za', rentals: 6, outstanding: 0, status: 'good' },
-    { id: 'C-1041', name: 'Johan van der Merwe', email: 'johan.vdm@example.co.za', rentals: 2, outstanding: 320, status: 'outstanding' },
-    { id: 'C-1039', name: 'Aisha Adams', email: 'aisha.adams@example.co.za', rentals: 11, outstanding: 0, status: 'good' },
-    { id: 'C-1035', name: 'Sipho Dlamini', email: 'sipho.dlamini@example.co.za', rentals: 1, outstanding: 90, status: 'outstanding' },
-    { id: 'C-1030', name: 'Lerato Mokoena', email: 'lerato.mokoena@example.co.za', rentals: 4, outstanding: 0, status: 'good' },
-    { id: 'C-1028', name: 'Ryan Petersen', email: 'ryan.petersen@example.co.za', rentals: 3, outstanding: 0, status: 'good' },
-    { id: 'C-1024', name: 'Zanele Khumalo', email: 'zanele.khumalo@example.co.za', rentals: 8, outstanding: 180, status: 'outstanding' },
-    { id: 'C-1019', name: 'Pieter Botha', email: 'pieter.botha@example.co.za', rentals: 5, outstanding: 0, status: 'good' },
-    { id: 'C-1015', name: 'Naledi Sithole', email: 'naledi.sithole@example.co.za', rentals: 1, outstanding: 0, status: 'good' },
-    { id: 'C-1012', name: 'Farhaan Osman', email: 'farhaan.osman@example.co.za', rentals: 9, outstanding: 260, status: 'outstanding' },
-    { id: 'C-1008', name: 'Chantelle Fortuin', email: 'chantelle.fortuin@example.co.za', rentals: 2, outstanding: 0, status: 'good' },
-    { id: 'C-1005', name: 'Mandla Zulu', email: 'mandla.zulu@example.co.za', rentals: 7, outstanding: 0, status: 'good' }
-  ];
+  const CUSTOMERS = [];
 
-  const BOOKINGS_ADMIN = [
-    { id: 'PS-48213', customer: 'Thandiwe Nkosi', battery: 'EcoFlow DELTA 2', status: 'approved', total: 720 },
-    { id: 'PS-48231', customer: 'Johan van der Merwe', battery: 'EcoFlow DELTA Pro', status: 'pending', total: 960 },
-    { id: 'PS-48190', customer: 'Aisha Adams', battery: 'EcoFlow RIVER 2 Pro', status: 'approved', total: 260 },
-    { id: 'PS-48177', customer: 'Sipho Dlamini', battery: 'EcoFlow RIVER 2', status: 'cancelled', total: 90 },
-    { id: 'PS-47820', customer: 'Lerato Mokoena', battery: 'EcoFlow DELTA Pro', status: 'completed', total: 960 },
-    { id: 'PS-48245', customer: 'Zanele Khumalo', battery: 'EcoFlow DELTA 2 Max', status: 'pending', total: 480 },
-    { id: 'PS-48238', customer: 'Ryan Petersen', battery: 'EcoFlow RIVER 3', status: 'pending', total: 170 },
-    { id: 'PS-48201', customer: 'Farhaan Osman', battery: 'EcoFlow DELTA Pro 3', status: 'approved', total: 720 },
-    { id: 'PS-48188', customer: 'Naledi Sithole', battery: 'EcoFlow RIVER Mini', status: 'approved', total: 140 },
-    { id: 'PS-48156', customer: 'Pieter Botha', battery: 'EcoFlow RIVER 2 Max', status: 'cancelled', total: 220 },
-    { id: 'PS-48102', customer: 'Chantelle Fortuin', battery: 'EcoFlow DELTA Mini', status: 'cancelled', total: 320 },
-    { id: 'PS-47960', customer: 'Mandla Zulu', battery: 'EcoFlow DELTA Pro', status: 'completed', total: 1280 },
-    { id: 'PS-47901', customer: 'Aisha Adams', battery: 'EcoFlow RIVER 2', status: 'completed', total: 180 },
-    { id: 'PS-47845', customer: 'Johan van der Merwe', battery: 'EcoFlow DELTA 2', status: 'completed', total: 540 }
-  ];
+  const BOOKINGS_ADMIN = [];
 
   /* ---------- Tiny persistence (client-only, no backend) ---------- */
   const store = {

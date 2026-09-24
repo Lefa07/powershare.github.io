@@ -14,6 +14,7 @@
   
 </head>
 <body class="">
+  <script src="js/powershare-api.js"></script>
   <script src="js/main.js"></script>
   <script src="js/navigation.js"></script>
   <script src="js/animations.js"></script>
@@ -42,19 +43,19 @@
 
       <script>
         const booking = PowerShare.store.get('currentBooking');
-        const bookingNumber = 'PS-' + Math.floor(40000 + Math.random() * 9000);
-        document.getElementById('booking-number').textContent = 'Booking ' + bookingNumber;
+        const bookingNumber = booking?.bookingId ? `Booking #${booking.bookingId}` : 'Booking submitted';
+        document.getElementById('booking-number').textContent = bookingNumber;
+        document.querySelector('h1').textContent = 'Booking request submitted';
+        document.querySelector('.screen-content > p').textContent = 'Your payment was recorded. The booking is now pending admin approval.';
         const receipt = document.getElementById('receipt');
         if (booking) {
           receipt.innerHTML = `
             <div class="receipt-line"><span>Battery</span><span>${booking.batteryName}</span></div>
             <div class="receipt-line"><span>Quantity</span><span>${booking.qty}</span></div>
-            <div class="receipt-line"><span>Rental period</span><span>${booking.start} &rarr; ${booking.end}</span></div>
-            <div class="receipt-line"><span>Rental cost</span><span>R${booking.rentalCost}</span></div>
-            <div class="receipt-line"><span>Deposit (refundable)</span><span>R${booking.deposit}</span></div>
+            <div class="receipt-line"><span>Rental period</span><span>${booking.start} → ${booking.end}</span></div>
+            <div class="receipt-line"><span>Total</span><span>R${Number(booking.total || 0).toFixed(2)}</span></div>
             <div class="divider" style="margin:6px 0"></div>
-            <div class="receipt-line"><span style="font-weight:700;color:var(--color-text)">Total paid</span><span style="font-weight:700;color:var(--color-primary)">R${booking.total}</span></div>
-          `;
+            <div class="receipt-line"><span style="font-weight:700;color:var(--color-text)">Status</span><span style="font-weight:700;color:var(--color-accent-dark)">Pending approval</span></div>`;
         }
       </script>
     </main>

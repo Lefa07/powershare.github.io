@@ -14,6 +14,7 @@
   
 </head>
 <body class="">
+  <script src="js/powershare-api.js"></script>
   <script src="js/main.js"></script>
   <script src="js/navigation.js"></script>
   <script src="js/animations.js"></script>
@@ -90,26 +91,19 @@
 
       <script>
         const params = new URLSearchParams(window.location.search);
-        const battery = PowerShare.findBattery(params.get('id')) || PowerShare.BATTERIES[0];
+        const batteryId = params.get('id');
+        let battery = null;
         let qty = 1;
-        let days = 4;
-
-        document.getElementById('summary-card').innerHTML = `
-          <span class="material-icons" style="font-size:40px;color:var(--color-primary)">${battery.icon}</span>
-          <div>
-            <span class="eyebrow">${battery.category}</span>
-            <h4>${battery.name}</h4>
-            <p style="margin-top:2px">R${battery.price} /day &middot; R${battery.deposit} deposit</p>
-          </div>`;
-        document.getElementById('pickup-location').textContent = battery.location;
+        let days = 1;
 
         const start = document.getElementById('start-date');
         const end = document.getElementById('end-date');
         const today = new Date();
+        const todayStr = today.toISOString().slice(0, 10);
         const inFour = new Date(today.getTime() + 4 * 86400000);
-        start.value = today.toISOString().slice(0, 10);
+        start.value = todayStr;
         end.value = inFour.toISOString().slice(0, 10);
-        start.min = today.toISOString().slice(0, 10);
+        start.min = todayStr;
 
         function recalcDays() {
           const s = new Date(start.value);
@@ -118,30 +112,65 @@
           days = diff > 0 ? diff : 1;
           renderPrice();
         }
-        start.addEventListener('change', recalcDays);
-        end.addEventListener('change', recalcDays);
-
-        document.querySelector('.stepper').addEventListener('stepchange', (e) => {
-          qty = e.detail.value;
-          renderPrice();
-        });
 
         function renderPrice() {
-          const rentalCost = battery.price * days * qty;
-          const deposit = battery.deposit * qty;
-          const total = rentalCost + deposit;
+          if (!battery) return;
+          const rentalCost = Number(battery.rentalPricePerDay) * days * qty;
           document.getElementById('price-summary').innerHTML = `
-            <div class="row-between"><span class="text-muted">Rental (${days} day${days > 1 ? 's' : ''} &times; ${qty})</span><strong>R${rentalCost}</strong></div>
-            <div class="row-between"><span class="text-muted">Refundable deposit</span><strong>R${deposit}</strong></div>
+            <div class="row-between"><span class="text-muted">Rental (${days} day${days > 1 ? 's' : ''} × ${qty})</span><strong>R${rentalCost.toFixed(2)}</strong></div>
             <div class="divider" style="margin:8px 0"></div>
-            <div class="row-between"><span style="font-weight:700">Total due today</span><strong style="color:var(--color-primary);font-size:17px">R${total}</strong></div>
-          `;
-          PowerShare.store.set('currentBooking', {
-            batteryId: battery.id, batteryName: battery.name, days, qty,
-            rentalCost, deposit, total, start: start.value, end: end.value
-          });
+            <div class="row-between"><span style="font-weight:700">Booking total</span><strong style="color:var(--color-primary);font-size:17px">R${rentalCost.toFixed(2)}</strong></div>`;
         }
-        renderPrice();
+
+        function renderBattery() {
+          document.getElementById('summary-card').innerHTML = `
+            <span class="material-icons" style="font-size:40px;color:var(--color-primary)">${PowerShareAPI.iconForCategory(battery.category?.name)}</span>
+            <div><span class="eyebrow">${battery.category?.name || 'Battery'}</span><h4>${battery.name}</h4><p style="margin-top:2px">R${battery.rentalPricePerDay} /day</p></div>`;
+          document.getElementById('pickup-location').textContent = 'PowerShare hub';
+          renderPrice();
+        }
+
+        start.addEventListener('change', recalcDays);
+        end.addEventListener('change', recalcDays);
+        document.querySelector('.stepper').addEventListener('stepchange', e => { qty = e.detail.value; renderPrice(); });
+
+        PowerShareAPI.getBattery(batteryId)
+          .then(data => {
+            battery = data;
+            if (battery.status !== 'AVAILABLE') throw new Error('This battery is no longer available for booking');
+            renderBattery();
+          })
+          .catch(err => {
+            document.getElementById('summary-card').innerHTML = `<p>${err.message || 'Could not load this battery.'}</p>`;
+            document.getElementById('continue-btn').style.pointerEvents = 'none';
+            document.getElementById('continue-btn').style.opacity = '.5';
+          });
+
+        document.getElementById('continue-btn').addEventListener('click', async e => {
+          e.preventDefault();
+          if (!battery) return;
+          const btn = e.currentTarget;
+          btn.style.pointerEvents = 'none';
+          btn.textContent = 'Creating booking…';
+          try {
+            const booking = await PowerShareAPI.createBooking({
+              batteryId: Number(battery.id),
+              startDate: start.value,
+              endDate: end.value,
+              quantity: qty
+            });
+            PowerShare.store.set('currentBooking', {
+              bookingId: booking.id, batteryId: booking.batteryId, batteryName: booking.batteryName,
+              qty: booking.quantity, start: booking.startDate, end: booking.endDate,
+              total: Number(booking.totalPrice || 0)
+            });
+            window.location.href = 'payment.html';
+          } catch (err) {
+            PowerShare.toast(err.message || 'Could not create booking', 'error');
+            btn.style.pointerEvents = '';
+            btn.textContent = 'Continue to payment';
+          }
+        });
       </script>
     </main>
 
