@@ -13,12 +13,11 @@
   <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body class="admin-body">
+  <script src="js/powershare-api.js"></script>
   <script src="js/main.js"></script>
   <script src="js/navigation.js"></script>
   <script src="js/animations.js"></script>
   <!-- ============ ADMIN: INVENTORY ============ -->
-  <!-- Shared scripts load first (above) so this page's inline
-       rendering script can rely on PowerShare already existing. -->
   <div class="admin-shell">
     <aside class="admin-sidebar">
       <div class="brand">
@@ -52,7 +51,7 @@
         </a>
       </nav>
       <div class="logout-row">
-        <a href="login.html">
+        <a href="#" id="logout-link">
           <span class="material-icons-outlined">logout</span>
           <span class="label">Log out</span>
         </a>
@@ -75,62 +74,142 @@
       <div class="admin-content">
         <div class="row-between" style="margin-bottom:18px">
           <div class="chip-row" data-exclusive>
-            <button class="chip active" data-filter="all">All batteries</button>
-            <button class="chip" data-filter="available">Available</button>
-            <button class="chip" data-filter="low">Low stock</button>
-            <button class="chip" data-filter="unavailable">Maintenance</button>
+            <button class="chip active" data-filter="ALL">All batteries</button>
+            <button class="chip" data-filter="AVAILABLE">Available</button>
+            <button class="chip" data-filter="RESERVED">Reserved</button>
+            <button class="chip" data-filter="RENTED">Rented</button>
+            <button class="chip" data-filter="MAINTENANCE">Maintenance</button>
+            <button class="chip" data-filter="UNAVAILABLE">Unavailable</button>
           </div>
           <button class="btn btn-primary btn-sm" data-open-sheet="add-battery-sheet">
             <span class="material-icons-outlined" style="font-size:17px">add</span> Add battery
           </button>
         </div>
         <table class="data-table">
-          <thead><tr><th>Battery</th><th>Category</th><th>Charge</th><th>Status</th><th>Hub</th><th>Daily rate</th></tr></thead>
-          <tbody id="inventory-body"></tbody>
+          <thead><tr><th>Battery</th><th>Model</th><th>Category</th><th>Condition</th><th>Status</th><th>Daily rate</th></tr></thead>
+          <tbody id="inventory-body"><tr><td colspan="6" style="text-align:center;color:var(--color-text-muted);padding:24px">Loading…</td></tr></tbody>
         </table>
 
         <div class="overlay" id="add-battery-sheet">
-          <div class="sheet" style="max-width:420px">
+          <div class="sheet" style="max-width:460px">
             <div class="sheet-handle"></div>
             <h3>Add battery to fleet</h3>
-            <div class="field" style="margin-top:16px"><label for="add-name">Model name</label><input type="text" id="add-name" placeholder="EcoFlow DELTA 2"></div>
-            <div class="field-row">
-              <div class="field"><label for="add-capacity">Capacity</label><input type="text" id="add-capacity" placeholder="1024Wh"></div>
-              <div class="field"><label for="add-rate">Daily rate (R)</label><input type="number" id="add-rate" placeholder="180"></div>
+            <div class="field-row" style="margin-top:16px">
+              <div class="field"><label for="add-model">Model</label><input type="text" id="add-model" placeholder="EcoFlow DELTA 2"></div>
+              <div class="field"><label for="add-name">Display name</label><input type="text" id="add-name" placeholder="DELTA 2"></div>
             </div>
-            <div class="field"><label for="add-hub">Assigned hub</label><select id="add-hub"><option>Claremont Hub</option><option>Sea Point Hub</option><option>Bellville Hub</option></select></div>
+            <div class="field"><label for="add-category">Category</label><select id="add-category"><option value="">Loading categories…</option></select></div>
+            <div class="field-row">
+              <div class="field"><label for="add-capacity">Capacity (Wh)</label><input type="number" id="add-capacity" placeholder="1024"></div>
+              <div class="field"><label for="add-runtime">Runtime (hours, optional)</label><input type="number" step="0.1" id="add-runtime" placeholder="6"></div>
+            </div>
+            <div class="field-row">
+              <div class="field"><label for="add-rate">Daily rate (R)</label><input type="number" id="add-rate" placeholder="180"></div>
+              <div class="field"><label for="add-deposit">Deposit (R)</label><input type="number" id="add-deposit" placeholder="1500"></div>
+            </div>
+            <div class="field"><label for="add-description">Description (optional)</label><textarea id="add-description" rows="2" placeholder="Short blurb for the catalogue"></textarea></div>
             <button class="btn btn-primary" id="add-battery-btn">Add to fleet</button>
           </div>
         </div>
 
         <script>
-          function chargeCell(charge) {
-            return `<div class="row" style="gap:8px"><div class="charge-ring charge-ring--sm" style="--charge-pct:${charge}%"><span class="charge-value" style="font-size:11px">${charge}%</span></div></div>`;
-          }
+          let allBatteries = [];
+          let activeFilter = 'ALL';
+
+          PowerShareAPI.getMyProfile()
+            .then((user) => {
+              if (!user || user.role !== 'ADMIN') { window.location.href = 'home.html'; return; }
+              loadInventory();
+              loadCategories();
+            })
+            .catch(() => { window.location.href = 'login.html'; });
+
+          document.getElementById('logout-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            PowerShareAPI.logout();
+            window.location.href = 'login.html';
+          });
+
           function statusBadge(status) {
-            if (status === 'available') return '<span class="badge badge-available">Available</span>';
-            if (status === 'low') return '<span class="badge badge-low">Low charge</span>';
-            return '<span class="badge badge-unavailable">Maintenance</span>';
+            if (status === 'AVAILABLE') return '<span class="badge badge-available">Available</span>';
+            if (status === 'MAINTENANCE') return '<span class="badge badge-unavailable">Maintenance</span>';
+            if (status === 'RESERVED' || status === 'RENTED') return '<span class="badge badge-low">' + (status === 'RESERVED' ? 'Reserved' : 'Rented') + '</span>';
+            return '<span class="badge badge-unavailable">Unavailable</span>';
           }
-          function renderInventory(filter) {
-            const list = filter === 'all' ? PowerShare.BATTERIES : PowerShare.BATTERIES.filter(b => b.status === filter);
+
+          function renderInventory() {
+            const list = activeFilter === 'ALL' ? allBatteries : allBatteries.filter(b => b.status === activeFilter);
             document.getElementById('inventory-body').innerHTML = list.map(b => `
               <tr>
-                <td><div class="row" style="gap:8px"><span class="material-icons-outlined" style="color:var(--color-primary);font-size:20px">${b.icon}</span>${b.name}</div></td>
-                <td>${b.category}</td>
-                <td>${chargeCell(b.charge)}</td>
+                <td><div class="row" style="gap:8px"><span class="material-icons-outlined" style="color:var(--color-primary);font-size:20px">${PowerShareAPI.iconForCategory(b.category.name)}</span>${b.name}</div></td>
+                <td>${b.model}</td>
+                <td>${b.category.name}</td>
+                <td>${b.condition}</td>
                 <td>${statusBadge(b.status)}</td>
-                <td>${b.location}</td>
-                <td>R${b.price}/day</td>
-              </tr>`).join('');
+                <td>R${b.rentalPricePerDay}/day</td>
+              </tr>`).join('') || `<tr><td colspan="6" style="text-align:center;color:var(--color-text-muted);padding:24px">No batteries in this view</td></tr>`;
           }
-          renderInventory('all');
+
+          function loadInventory() {
+            PowerShareAPI.admin.listAllBatteries()
+              .then((batteries) => { allBatteries = batteries; renderInventory(); })
+              .catch(() => {
+                document.getElementById('inventory-body').innerHTML =
+                  '<tr><td colspan="6" style="text-align:center;color:var(--color-text-muted);padding:24px">Could not load inventory</td></tr>';
+              });
+          }
+
+          function loadCategories() {
+            PowerShareAPI.getBatteryCategories()
+              .then((categories) => {
+                document.getElementById('add-category').innerHTML = categories
+                  .map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+              })
+              .catch(() => {
+                document.getElementById('add-category').innerHTML = '<option value="">Could not load categories</option>';
+              });
+          }
+
           document.querySelectorAll('.chip-row[data-exclusive] .chip').forEach(chip => {
-            chip.addEventListener('click', () => renderInventory(chip.getAttribute('data-filter')));
+            chip.addEventListener('click', () => { activeFilter = chip.getAttribute('data-filter'); renderInventory(); });
           });
-          document.getElementById('add-battery-btn').addEventListener('click', () => {
-            document.getElementById('add-battery-sheet').classList.remove('open');
-            PowerShare.toast('Battery added to fleet', 'success');
+
+          document.getElementById('add-battery-btn').addEventListener('click', function () {
+            const payload = {
+              model: document.getElementById('add-model').value.trim(),
+              name: document.getElementById('add-name').value.trim(),
+              categoryId: Number(document.getElementById('add-category').value),
+              capacityWh: Number(document.getElementById('add-capacity').value),
+              runtimeHours: document.getElementById('add-runtime').value ? Number(document.getElementById('add-runtime').value) : null,
+              rentalPricePerDay: Number(document.getElementById('add-rate').value),
+              depositAmount: Number(document.getElementById('add-deposit').value),
+              description: document.getElementById('add-description').value.trim() || null,
+            };
+
+            if (!payload.model || !payload.name || !payload.categoryId || !payload.capacityWh || !payload.rentalPricePerDay || payload.depositAmount === '') {
+              PowerShare.toast('Fill in model, name, category, capacity, rate and deposit', 'error');
+              return;
+            }
+
+            this.disabled = true;
+            this.textContent = 'Adding…';
+
+            PowerShareAPI.admin.createBattery(payload)
+              .then(() => {
+                document.getElementById('add-battery-sheet').classList.remove('open');
+                PowerShare.toast('Battery added to fleet', 'success');
+                ['add-model', 'add-name', 'add-capacity', 'add-runtime', 'add-rate', 'add-deposit', 'add-description']
+                  .forEach(id => document.getElementById(id).value = '');
+                loadInventory();
+              })
+              .catch((err) => {
+                const fieldErrors = err.body && err.body.validationErrors;
+                PowerShare.toast((fieldErrors && fieldErrors.join('; ')) || err.message || 'Could not add battery', 'error');
+              })
+              .finally(() => {
+                this.disabled = false;
+                this.textContent = 'Add to fleet';
+              });
           });
         </script>
       </div>

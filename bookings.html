@@ -13,12 +13,11 @@
   <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body class="admin-body">
+  <script src="js/powershare-api.js"></script>
   <script src="js/main.js"></script>
   <script src="js/navigation.js"></script>
   <script src="js/animations.js"></script>
   <!-- ============ ADMIN: BOOKINGS ============ -->
-  <!-- Shared scripts load first (above) so this page's inline
-       rendering script can rely on PowerShare already existing. -->
   <div class="admin-shell">
     <aside class="admin-sidebar">
       <div class="brand">
@@ -52,7 +51,7 @@
         </a>
       </nav>
       <div class="logout-row">
-        <a href="login.html">
+        <a href="#" id="logout-link">
           <span class="material-icons-outlined">logout</span>
           <span class="label">Log out</span>
         </a>
@@ -73,39 +72,93 @@
         </div>
       </header>
       <div class="admin-content">
-        <div class="tab-row" data-panels="admin-bookings" style="max-width:520px">
+        <div class="tab-row" data-panels="admin-bookings" style="max-width:620px">
           <button class="active" data-target="pending">Pending</button>
           <button data-target="approved">Approved</button>
+          <button data-target="rejected">Rejected</button>
           <button data-target="cancelled">Cancelled</button>
           <button data-target="completed">Completed</button>
         </div>
 
         <div style="margin-top:20px">
-          <div data-panel-group="admin-bookings" data-panel="pending"><table class="data-table"><thead><tr><th>Booking</th><th>Customer</th><th>Battery</th><th>Total</th><th>Action</th></tr></thead><tbody id="tbl-pending"></tbody></table></div>
+          <div data-panel-group="admin-bookings" data-panel="pending"><table class="data-table"><thead><tr><th>Booking</th><th>Customer</th><th>Battery</th><th>Total</th><th>Action</th></tr></thead><tbody id="tbl-pending"><tr><td colspan="5" style="text-align:center;color:var(--color-text-muted);padding:24px">Loading…</td></tr></tbody></table></div>
           <div data-panel-group="admin-bookings" data-panel="approved" style="display:none"><table class="data-table"><thead><tr><th>Booking</th><th>Customer</th><th>Battery</th><th>Total</th></tr></thead><tbody id="tbl-approved"></tbody></table></div>
+          <div data-panel-group="admin-bookings" data-panel="rejected" style="display:none"><table class="data-table"><thead><tr><th>Booking</th><th>Customer</th><th>Battery</th><th>Total</th></tr></thead><tbody id="tbl-rejected"></tbody></table></div>
           <div data-panel-group="admin-bookings" data-panel="cancelled" style="display:none"><table class="data-table"><thead><tr><th>Booking</th><th>Customer</th><th>Battery</th><th>Total</th></tr></thead><tbody id="tbl-cancelled"></tbody></table></div>
           <div data-panel-group="admin-bookings" data-panel="completed" style="display:none"><table class="data-table"><thead><tr><th>Booking</th><th>Customer</th><th>Battery</th><th>Total</th></tr></thead><tbody id="tbl-completed"></tbody></table></div>
         </div>
 
         <script>
-          function rowsFor(status) {
-            return PowerShare.BOOKINGS_ADMIN.filter(b => b.status === status).map(b => `
+          PowerShareAPI.getMyProfile()
+            .then((user) => {
+              if (!user || user.role !== 'ADMIN') { window.location.href = 'home.html'; return; }
+              loadAll();
+            })
+            .catch(() => { window.location.href = 'login.html'; });
+
+          document.getElementById('logout-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            PowerShareAPI.logout();
+            window.location.href = 'login.html';
+          });
+
+          const STATUSES = ['PENDING', 'APPROVED', 'REJECTED', 'CANCELLED', 'COMPLETED'];
+
+          function rowsFor(status, bookings) {
+            const actionCell = status === 'PENDING'
+              ? '<td><button class="btn btn-primary btn-sm approve-btn" data-id="__ID__">Approve</button> <button class="btn btn-outline btn-sm reject-btn" data-id="__ID__">Reject</button></td>'
+              : '';
+            return bookings.map(b => `
               <tr>
-                <td>${b.id}</td><td>${b.customer}</td><td>${b.battery}</td><td>R${b.total}</td>
-                ${status === 'pending' ? '<td><button class="btn btn-primary btn-sm approve-btn">Approve</button></td>' : ''}
-              </tr>`).join('') || `<tr><td colspan="5" style="text-align:center;color:var(--color-text-muted);padding:24px">No ${status} bookings</td></tr>`;
+                <td>${b.id}</td><td>${b.customerName}</td><td>${b.batteryName}</td><td>R${b.totalPrice}</td>
+                ${actionCell.replaceAll('__ID__', b.id)}
+              </tr>`).join('') || `<tr><td colspan="5" style="text-align:center;color:var(--color-text-muted);padding:24px">No ${status.toLowerCase()} bookings</td></tr>`;
           }
-          ['pending', 'approved', 'cancelled', 'completed'].forEach(s => {
-            document.getElementById('tbl-' + s).innerHTML = rowsFor(s);
-          });
-          document.querySelectorAll('.approve-btn').forEach(btn => {
-            btn.addEventListener('click', function () {
-              PowerShare.toast('Booking approved', 'success');
-              this.closest('tr').style.opacity = '0.4';
-              this.textContent = 'Approved';
-              this.disabled = true;
+
+          function loadTab(status) {
+            const tbody = document.getElementById('tbl-' + status.toLowerCase());
+            return PowerShareAPI.admin.listBookings(status)
+              .then((bookings) => { tbody.innerHTML = rowsFor(status, bookings); attachActionHandlers(); })
+              .catch(() => { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--color-text-muted);padding:24px">Could not load</td></tr>`; });
+          }
+
+          function loadAll() {
+            STATUSES.forEach(loadTab);
+          }
+
+          function attachActionHandlers() {
+            document.querySelectorAll('.approve-btn').forEach((btn) => {
+              btn.onclick = function () {
+                this.disabled = true;
+                PowerShareAPI.admin.approveBooking(this.dataset.id)
+                  .then(() => {
+                    PowerShare.toast('Booking approved', 'success');
+                    loadTab('PENDING');
+                    loadTab('APPROVED');
+                  })
+                  .catch((err) => {
+                    PowerShare.toast(err.message || 'Could not approve booking', 'error');
+                    this.disabled = false;
+                  });
+              };
             });
-          });
+            document.querySelectorAll('.reject-btn').forEach((btn) => {
+              btn.onclick = function () {
+                const reason = window.prompt('Reason for rejecting (optional):', '') || undefined;
+                this.disabled = true;
+                PowerShareAPI.admin.rejectBooking(this.dataset.id, reason)
+                  .then(() => {
+                    PowerShare.toast('Booking rejected', 'success');
+                    loadTab('PENDING');
+                    loadTab('REJECTED');
+                  })
+                  .catch((err) => {
+                    PowerShare.toast(err.message || 'Could not reject booking', 'error');
+                    this.disabled = false;
+                  });
+              };
+            });
+          }
         </script>
       </div>
     </div>
