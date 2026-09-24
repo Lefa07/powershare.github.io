@@ -14,7 +14,7 @@
  */
 const PowerShareAPI = (() => {
   // Point this at wherever the Spring Boot app is actually running.
-  const BASE_URL = 'http://localhost:8080/api';
+  const BASE_URL = 'https://powersharebackend.onrender.com/api';;
   const TOKEN_KEY = 'powershare_token';
 
   function getToken() {
