@@ -28,14 +28,14 @@
     <a href="#" class="back-btn" data-href="profile.html" aria-label="Go back">
       <span class="material-icons-outlined">arrow_back</span>
     </a>
-    <h2>Settings</h2>
+    <h2 data-i18n="Settings">Settings</h2>
     <div class="topbar-actions"><span style="width:40px"></span></div>
   </header>
       <div class="screen-content">
         <div class="section">
-          <h3>Appearance</h3>
+          <h3 data-i18n="Appearance">Appearance</h3>
           <div class="card row-between" style="margin-top:12px">
-            <div class="row" style="gap:12px"><span class="material-icons-outlined" style="color:var(--color-primary)">dark_mode</span><span>Dark mode</span></div>
+            <div class="row" style="gap:12px"><span class="material-icons-outlined" style="color:var(--color-primary)">dark_mode</span><span data-i18n="Dark mode">Dark mode</span></div>
             <label class="switch">
               <input type="checkbox" id="dark-mode-toggle">
               <span class="switch-track"></span>
@@ -47,33 +47,27 @@
           <h3>Preferences</h3>
           <div class="card stack-3" style="margin-top:12px">
             <div class="row-between">
-              <span>Language</span>
-              <select
-               id="language-select" 
-               style="width:auto;padding:8px 12px;border-radius:8px;border:1.5px solid #E0E0E0" > 
-               <option value="en">English</option>
-               <option value="nso">Sepedi</option> 
-               <option value="af">Afrikaans</option> 
-               <option value="xh">isiXhosa</option> 
-               <option value="zu">isiZulu</option> 
-             </select>
+              <span data-i18n="Language">Language</span>
+              <select id="language-select" aria-label="Language" style="width:auto;padding:8px 12px;border-radius:8px;border:1.5px solid #E0E0E0">
+                <option value="en" data-i18n="English">English</option><option value="nso" data-i18n="Sepedi">Sepedi</option>
+              </select>
             </div>
             <div class="divider" style="margin:0"></div>
             <div class="row-between">
-              <span>Push notifications</span>
+              <span data-i18n="Push notifications">Push notifications</span>
               <label class="switch"><input type="checkbox" checked><span class="switch-track"></span></label>
             </div>
             <div class="divider" style="margin:0"></div>
             <div class="row-between">
-              <span>Email updates</span>
+              <span data-i18n="Email updates">Email updates</span>
               <label class="switch"><input type="checkbox" checked><span class="switch-track"></span></label>
             </div>
           </div>
         </div>
 
         <div class="section stack-2">
-          <a href="about.html" class="card row-between card--hover"><span>Privacy Policy</span><span class="material-icons-outlined text-muted">chevron_right</span></a>
-          <a href="about.html" class="card row-between card--hover"><span>Terms of Service</span><span class="material-icons-outlined text-muted">chevron_right</span></a>
+          <a href="about.html" class="card row-between card--hover"><span data-i18n="Privacy Policy">Privacy Policy</span><span class="material-icons-outlined text-muted">chevron_right</span></a>
+          <a href="about.html" class="card row-between card--hover"><span data-i18n="Terms of Service">Terms of Service</span><span class="material-icons-outlined text-muted">chevron_right</span></a>
         </div>
       </div>
 
