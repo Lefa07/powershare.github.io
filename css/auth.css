@@ -1,0 +1,104 @@
+/* ============================================================
+   PowerShare — Authentication pages
+   ============================================================ */
+
+.auth-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: var(--color-bg);
+}
+
+.auth-container {
+  width: 100%;
+  max-width: 440px;
+}
+
+.auth-card {
+  background: var(--color-secondary);
+  border-radius: var(--radius-lg);
+  padding: 32px 24px;
+  box-shadow: var(--shadow-md);
+}
+
+.auth-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  color: var(--color-primary);
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.auth-logo .material-icons-outlined {
+  font-size: 30px;
+}
+
+.auth-card h1 {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.auth-card > p {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.auth-card .btn {
+  width: 100%;
+}
+
+.auth-card .divider {
+  height: 1px;
+  background: #ECECEC;
+  margin: 24px 0;
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
+#forgot-sheet {
+  z-index: 1000;
+}
+
+#forgot-sheet .sheet {
+  position: relative;
+  z-index: 1001;
+}
+
+#forgot-sheet .sheet .btn {
+  position: relative;
+  z-index: 1002;
+  pointer-events: auto;
+}
+
+#forgot-sheet .sheet .btn-ghost {
+  cursor: pointer;
+}
+
+#forgot-sheet[aria-hidden="true"] {
+  visibility: hidden;
+}
+
+#forgot-sheet[aria-hidden="false"] {
+  visibility: visible;
+}
+
+@media (max-width: 480px) {
+  .auth-page {
+    align-items: flex-start;
+    padding: 20px 14px;
+  }
+
+  .auth-card {
+    margin-top: 12px;
+    padding: 28px 20px;
+  }
+}
