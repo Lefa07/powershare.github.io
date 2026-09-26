@@ -2,259 +2,388 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+  >
+
   <title>PowerShare — Login</title>
+
+  <link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+  >
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  >
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Roboto:wght@400;500;700&display=swap"
+    rel="stylesheet"
+  >
+
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined"
+  >
 
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/auth.css">
-
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link rel="stylesheet" href="css/responsive.css">
 </head>
 
 <body>
 
-  <main class="auth-page">
+  <!-- ============================================================
+       SHARED APPLICATION SCRIPTS
+       Same application structure as welcome.html
+       ============================================================ -->
 
-    <div class="auth-container">
+  <script src="js/main.js"></script>
+  <script src="js/navigation.js"></script>
+  <script src="js/animations.js"></script>
+  <script src="js/powershare-api.js"></script>
 
-      <div class="auth-card">
 
-        <div class="auth-logo">
-          <span class="material-icons-outlined">battery_charging_full</span>
-          <span>PowerShare</span>
-        </div>
+  <!-- ============================================================
+       LOGIN APPLICATION
+       Uses the exact same outer application frame as Welcome
+       ============================================================ -->
 
-        <h1>Welcome back</h1>
-        <p class="text-muted">
-          Log in to manage your PowerShare rentals.
-        </p>
+  <div class="app-shell">
 
-        <form id="login-form">
+    <main class="screen screen--no-nav">
 
-          <div class="field">
-            <label for="login-email">Email</label>
+      <div class="auth-page">
 
-            <div class="input-wrap">
-              <span class="material-icons-outlined">mail_outline</span>
+        <div class="auth-container">
 
-              <input
-                type="email"
-                id="login-email"
-                placeholder="you@example.co.za"
-                autocomplete="email"
+          <div class="auth-card">
+
+            <!-- PowerShare Logo -->
+
+            <div class="auth-logo">
+
+              <span class="material-icons-outlined">
+                battery_charging_full
+              </span>
+
+              <span>
+                PowerShare
+              </span>
+
+            </div>
+
+
+            <!-- Heading -->
+
+            <h1>
+              Welcome back
+            </h1>
+
+            <p class="text-muted">
+              Log in to manage your PowerShare rentals.
+            </p>
+
+
+            <!-- ==================================================
+                 LOGIN FORM
+                 ================================================== -->
+
+            <form id="login-form">
+
+              <!-- Email -->
+
+              <div class="field">
+
+                <label for="login-email">
+                  Email
+                </label>
+
+                <div class="input-wrap">
+
+                  <span class="material-icons-outlined">
+                    mail_outline
+                  </span>
+
+                  <input
+                    type="email"
+                    id="login-email"
+                    placeholder="you@example.co.za"
+                    autocomplete="email"
+                  >
+
+                </div>
+
+                <div class="error-msg">
+                  Email is required.
+                </div>
+
+              </div>
+
+
+              <!-- Password -->
+
+              <div class="field">
+
+                <label for="login-password">
+                  Password
+                </label>
+
+                <div class="input-wrap">
+
+                  <span class="material-icons-outlined">
+                    lock_outline
+                  </span>
+
+                  <input
+                    type="password"
+                    id="login-password"
+                    placeholder="Enter your password"
+                    autocomplete="current-password"
+                  >
+
+                  <button
+                    type="button"
+                    class="toggle-visibility"
+                    aria-label="Show password"
+                    data-password-toggle
+                  >
+
+                    <span class="material-icons-outlined">
+                      visibility
+                    </span>
+
+                  </button>
+
+                </div>
+
+                <div class="error-msg">
+                  Password is required.
+                </div>
+
+              </div>
+
+
+              <!-- Remember Me / Forgot Password -->
+
+              <div class="row-between">
+
+                <label
+                  class="checkbox-row"
+                  style="align-items:center"
+                >
+
+                  <input
+                    type="checkbox"
+                    id="remember-me"
+                  >
+
+                  Remember me
+
+                </label>
+
+
+                <a
+                  href="#"
+                  data-open-sheet="forgot-sheet"
+                  id="forgot-password-link"
+                  style="
+                    font-size:13px;
+                    font-weight:600;
+                    color:var(--color-primary)
+                  "
+                >
+                  Forgot password?
+                </a>
+
+              </div>
+
+
+              <!-- Login Button -->
+
+              <button
+                type="submit"
+                class="btn btn-primary"
+                style="margin-top:8px"
               >
+                Log in
+              </button>
+
+            </form>
+
+
+            <!-- ==================================================
+                 SIGN UP
+                 ================================================== -->
+
+            <div
+              class="row"
+              style="
+                justify-content:center;
+                gap:6px;
+                margin-top:24px;
+                font-size:13.5px
+              "
+            >
+
+              <span class="text-muted">
+                Don't have an account?
+              </span>
+
+              <a
+                href="register.html"
+                style="
+                  font-weight:700;
+                  color:var(--color-primary)
+                "
+              >
+                Sign up
+              </a>
+
             </div>
 
-            <div class="error-msg">
-              Email is required.
+
+            <!-- Divider -->
+
+            <div class="divider"></div>
+
+
+            <!-- Admin Information -->
+
+            <div style="text-align:center">
+
+              <span
+                style="
+                  font-size:13px;
+                  color:var(--color-text-muted);
+                  font-weight:600
+                "
+              >
+                Business admin? Log in above — you'll land on your
+                dashboard automatically.
+              </span>
+
             </div>
+
           </div>
 
-          <div class="field">
+        </div>
 
-            <label for="login-password">Password</label>
+      </div>
+
+
+      <!-- ========================================================
+           FORGOT PASSWORD SHEET
+           ======================================================== -->
+
+      <div
+        class="overlay"
+        id="forgot-sheet"
+        aria-hidden="true"
+      >
+
+        <div
+          class="sheet"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="forgot-password-title"
+        >
+
+          <div class="sheet-handle"></div>
+
+          <h3 id="forgot-password-title">
+            Reset your password
+          </h3>
+
+          <p style="margin-top:6px">
+            Enter the email on your account and we'll send
+            a reset link.
+          </p>
+
+
+          <!-- Reset Email -->
+
+          <div
+            class="field"
+            style="margin-top:20px"
+          >
+
+            <label for="reset-email">
+              Email
+            </label>
 
             <div class="input-wrap">
 
               <span class="material-icons-outlined">
-                lock_outline
+                mail_outline
               </span>
 
               <input
-                type="password"
-                id="login-password"
-                placeholder="Enter your password"
-                autocomplete="current-password"
+                type="email"
+                id="reset-email"
+                placeholder="you@example.co.za"
+                autocomplete="email"
               >
 
-              <button
-                type="button"
-                class="toggle-visibility"
-                aria-label="Show password"
-              >
-                <span class="material-icons-outlined">
-                  visibility
-                </span>
-              </button>
-
-            </div>
-
-            <div class="error-msg">
-              Password is required.
             </div>
 
           </div>
 
-          <div class="row-between">
 
-            <label
-              class="checkbox-row"
-              style="align-items:center"
-            >
-              <input
-                type="checkbox"
-                id="remember-me"
-              >
-
-              Remember me
-            </label>
-
-            <a
-              href="#"
-              data-open-sheet="forgot-sheet"
-              id="forgot-password-link"
-              style="
-                font-size:13px;
-                font-weight:600;
-                color:var(--color-primary)
-              "
-            >
-              Forgot password?
-            </a>
-
-          </div>
+          <!-- Send Reset -->
 
           <button
-            type="submit"
+            type="button"
             class="btn btn-primary"
-            style="margin-top:8px"
+            id="send-reset-btn"
           >
-            Log in
+            Send reset link
           </button>
 
-        </form>
 
-        <div
-          class="row"
-          style="
-            justify-content:center;
-            gap:6px;
-            margin-top:24px;
-            font-size:13.5px
-          "
-        >
-          <span class="text-muted">
-            Don't have an account?
-          </span>
+          <!-- Cancel -->
 
-          <a
-            href="register.html"
-            style="
-              font-weight:700;
-              color:var(--color-primary)
-            "
+          <button
+            type="button"
+            class="btn btn-ghost"
+            id="cancel-reset-btn"
+            data-close-sheet
+            style="margin-top:4px"
           >
-            Sign up
-          </a>
-        </div>
-
-        <div class="divider"></div>
-
-        <div style="text-align:center">
-
-          <span
-            style="
-              font-size:13px;
-              color:var(--color-text-muted);
-              font-weight:600
-            "
-          >
-            Business admin? Log in above — you'll land on your
-            dashboard automatically.
-          </span>
+            Cancel
+          </button>
 
         </div>
 
       </div>
 
-    </div>
+    </main>
+
+  </div>
 
 
-    <!-- FORGOT PASSWORD SHEET -->
+  <!-- ============================================================
+       LOGIN JAVASCRIPT
+       ============================================================ -->
 
-    <div
-      class="overlay"
-      id="forgot-sheet"
-      aria-hidden="true"
-    >
+  <script>
 
-      <div
-        class="sheet"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="forgot-password-title"
-      >
+    /* ============================================================
+       LOGIN
+       ============================================================ */
 
-        <div class="sheet-handle"></div>
+    const loginForm = document.getElementById('login-form');
 
-        <h3 id="forgot-password-title">
-          Reset your password
-        </h3>
+    if (loginForm) {
 
-        <p style="margin-top:6px">
-          Enter the email on your account and we'll send
-          a reset link.
-        </p>
-
-        <div
-          class="field"
-          style="margin-top:20px"
-        >
-
-          <label for="reset-email">
-            Email
-          </label>
-
-          <div class="input-wrap">
-
-            <span class="material-icons-outlined">
-              mail_outline
-            </span>
-
-            <input
-              type="email"
-              id="reset-email"
-              placeholder="you@example.co.za"
-              autocomplete="email"
-            >
-
-          </div>
-
-        </div>
-
-        <button
-          type="button"
-          class="btn btn-primary"
-          id="send-reset-btn"
-        >
-          Send reset link
-        </button>
-
-        <button
-          type="button"
-          class="btn btn-ghost"
-          id="cancel-reset-btn"
-          data-close-sheet
-          style="margin-top:4px"
-        >
-          Cancel
-        </button>
-
-      </div>
-
-    </div>
-
-
-    <script>
-
-      /* ================================
-         LOGIN
-      ================================= */
-
-      document
-        .getElementById('login-form')
-        .addEventListener('submit', function (e) {
+      loginForm.addEventListener(
+        'submit',
+        function (e) {
 
           e.preventDefault();
 
@@ -268,6 +397,7 @@
               .getElementById('login-password')
               .closest('.field');
 
+
           const emailOk =
             PowerShare.validateField(
               emailField,
@@ -277,6 +407,7 @@
               ]
             );
 
+
           const passOk =
             PowerShare.validateField(
               passField,
@@ -285,17 +416,21 @@
               ]
             );
 
+
           if (!emailOk || !passOk) {
             return;
           }
+
 
           const submitBtn =
             this.querySelector(
               'button[type="submit"]'
             );
 
+
           submitBtn.disabled = true;
           submitBtn.textContent = 'Logging in…';
+
 
           PowerShareAPI
             .login(
@@ -310,13 +445,17 @@
                 'success'
               );
 
+
               const destination =
                 session.role === 'ADMIN'
                   ? 'admin-dashboard.html'
                   : 'home.html';
 
+
               setTimeout(() => {
+
                 window.location.href = destination;
+
               }, 500);
 
             })
@@ -328,128 +467,168 @@
                 'error'
               );
 
+
               submitBtn.disabled = false;
               submitBtn.textContent = 'Log in';
 
             });
 
-        });
-
-
-      /* ================================
-         FORGOT PASSWORD
-      ================================= */
-
-      const forgotSheet =
-        document.getElementById('forgot-sheet');
-
-      const forgotLink =
-        document.getElementById(
-          'forgot-password-link'
-        );
-
-      const cancelResetBtn =
-        document.getElementById(
-          'cancel-reset-btn'
-        );
-
-
-      /* Open forgot password */
-
-      function openForgotPasswordSheet() {
-        if (!forgotSheet) return;
-
-        forgotSheet.classList.add('open');
-        forgotSheet.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('modal-open');
-
-        const resetEmail = document.getElementById('reset-email');
-        if (resetEmail) {
-          window.setTimeout(() => resetEmail.focus(), 150);
         }
+      );
+
+    }
+
+
+    /* ============================================================
+       FORGOT PASSWORD
+       ============================================================ */
+
+    const forgotSheet =
+      document.getElementById('forgot-sheet');
+
+    const forgotLink =
+      document.getElementById(
+        'forgot-password-link'
+      );
+
+    const cancelResetBtn =
+      document.getElementById(
+        'cancel-reset-btn'
+      );
+
+
+    /* ------------------------------------------------------------
+       Open Forgot Password
+       ------------------------------------------------------------ */
+
+    function openForgotPasswordSheet() {
+
+      if (!forgotSheet) {
+        return;
       }
 
-      if (forgotLink) {
-        forgotLink.addEventListener('click', function (event) {
+
+      forgotSheet.classList.add('open');
+
+      forgotSheet.setAttribute(
+        'aria-hidden',
+        'false'
+      );
+
+
+      document.body.classList.add(
+        'modal-open'
+      );
+
+
+      const resetEmail =
+        document.getElementById(
+          'reset-email'
+        );
+
+
+      if (resetEmail) {
+
+        window.setTimeout(
+          () => resetEmail.focus(),
+          150
+        );
+
+      }
+
+    }
+
+
+    if (forgotLink) {
+
+      forgotLink.addEventListener(
+        'click',
+        function (event) {
+
           event.preventDefault();
           event.stopPropagation();
+
           openForgotPasswordSheet();
-        });
-      }
 
-
-      /* Close forgot password */
-
-      function closeForgotPasswordSheet() {
-
-        if (!forgotSheet) {
-          return;
         }
+      );
 
-        forgotSheet.classList.remove('open');
+    }
 
-        forgotSheet.setAttribute(
-          'aria-hidden',
-          'true'
+
+    /* ------------------------------------------------------------
+       Close Forgot Password
+       ------------------------------------------------------------ */
+
+    function closeForgotPasswordSheet() {
+
+      if (!forgotSheet) {
+        return;
+      }
+
+
+      forgotSheet.classList.remove(
+        'open'
+      );
+
+
+      forgotSheet.setAttribute(
+        'aria-hidden',
+        'true'
+      );
+
+
+      document.body.classList.remove(
+        'modal-open'
+      );
+
+
+      const resetEmail =
+        document.getElementById(
+          'reset-email'
         );
 
-        document.body.classList.remove('modal-open');
 
-        const resetEmail = document.getElementById('reset-email');
-        if (resetEmail) {
-          resetEmail.value = '';
+      if (resetEmail) {
+        resetEmail.value = '';
+      }
+
+    }
+
+
+    /* ------------------------------------------------------------
+       Cancel Button
+       ------------------------------------------------------------ */
+
+    if (cancelResetBtn) {
+
+      cancelResetBtn.addEventListener(
+        'click',
+        function (event) {
+
+          event.preventDefault();
+          event.stopPropagation();
+
+          closeForgotPasswordSheet();
+
         }
+      );
 
-      }
-
-
-      /* Cancel button */
-
-      if (cancelResetBtn) {
-
-        cancelResetBtn.addEventListener(
-          'click',
-          function (event) {
-
-            event.preventDefault();
-            event.stopPropagation();
-
-            closeForgotPasswordSheet();
-
-          }
-        );
-
-      }
+    }
 
 
-      /* Click outside sheet */
+    /* ------------------------------------------------------------
+       Click Outside Sheet
+       ------------------------------------------------------------ */
 
-      if (forgotSheet) {
+    if (forgotSheet) {
 
-        forgotSheet.addEventListener(
-          'click',
-          function (event) {
-
-            if (event.target === forgotSheet) {
-              closeForgotPasswordSheet();
-            }
-
-          }
-        );
-
-      }
-
-
-      /* Escape key */
-
-      document.addEventListener(
-        'keydown',
+      forgotSheet.addEventListener(
+        'click',
         function (event) {
 
           if (
-            event.key === 'Escape' &&
-            forgotSheet &&
-            forgotSheet.classList.contains('open')
+            event.target === forgotSheet
           ) {
 
             closeForgotPasswordSheet();
@@ -459,75 +638,118 @@
         }
       );
 
+    }
 
-      /* Send reset link */
 
-      const sendResetBtn =
-        document.getElementById(
-          'send-reset-btn'
-        );
+    /* ------------------------------------------------------------
+       Escape Key
+       ------------------------------------------------------------ */
 
-      if (sendResetBtn) {
+    document.addEventListener(
+      'keydown',
+      function (event) {
 
-        sendResetBtn.addEventListener(
-          'click',
-          async function () {
+        if (
+          event.key === 'Escape' &&
+          forgotSheet &&
+          forgotSheet.classList.contains('open')
+        ) {
 
-            const email =
-              document
-                .getElementById('reset-email')
-                .value
-                .trim();
+          closeForgotPasswordSheet();
 
-            if (!email) {
-
-              PowerShare.toast(
-                'Please enter your email address.',
-                'error'
-              );
-
-              return;
-            }
-
-            sendResetBtn.disabled = true;
-            sendResetBtn.textContent =
-              'Sending…';
-
-            try {
-
-              await PowerShareAPI.forgotPassword(
-                email
-              );
-
-              PowerShare.toast(
-                'Reset link sent — check your inbox.',
-                'success'
-              );
-
-              closeForgotPasswordSheet();
-
-            } catch (err) {
-
-              PowerShare.toast(
-                err.message ||
-                'Unable to send reset link.',
-                'error'
-              );
-
-            } finally {
-
-              sendResetBtn.disabled = false;
-              sendResetBtn.textContent =
-                'Send reset link';
-
-            }
-
-          }
-        );
+        }
 
       }
+    );
 
-    </script>
-  </main>
+
+    /* ============================================================
+       SEND RESET LINK
+       ============================================================ */
+
+    const sendResetBtn =
+      document.getElementById(
+        'send-reset-btn'
+      );
+
+
+    if (sendResetBtn) {
+
+      sendResetBtn.addEventListener(
+        'click',
+        async function () {
+
+          const resetEmailInput =
+            document.getElementById(
+              'reset-email'
+            );
+
+
+          const email =
+            resetEmailInput
+              ? resetEmailInput.value.trim()
+              : '';
+
+
+          if (!email) {
+
+            PowerShare.toast(
+              'Please enter your email address.',
+              'error'
+            );
+
+            return;
+          }
+
+
+          sendResetBtn.disabled = true;
+
+          sendResetBtn.textContent =
+            'Sending…';
+
+
+          try {
+
+            await PowerShareAPI.forgotPassword(
+              email
+            );
+
+
+            PowerShare.toast(
+              'Reset link sent — check your inbox.',
+              'success'
+            );
+
+
+            closeForgotPasswordSheet();
+
+          }
+
+          catch (err) {
+
+            PowerShare.toast(
+              err.message ||
+              'Unable to send reset link.',
+              'error'
+            );
+
+          }
+
+          finally {
+
+            sendResetBtn.disabled = false;
+
+            sendResetBtn.textContent =
+              'Send reset link';
+
+          }
+
+        }
+      );
+
+    }
+
+  </script>
+
 </body>
 </html>

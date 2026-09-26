@@ -1,13 +1,29 @@
+/* ============================================================
+   PowerShare — Authentication Application Frame
+   Login must use the same application frame as Welcome.
+   ============================================================ */
+
 .auth-page {
   min-height: 100vh;
   min-height: 100dvh;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   padding: 24px 16px;
+
   background: var(--color-bg);
 }
 
+/* Keep the login page inside the same 390px PowerShare frame */
+.app-shell .auth-page {
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Login content */
 .auth-container {
   width: 100%;
   max-width: 440px;
