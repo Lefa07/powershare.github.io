@@ -125,9 +125,25 @@
               submitBtn.textContent = 'Log in';
             });
         });
-        document.getElementById('send-reset-btn').addEventListener('click', function () {
-          PowerShare.toast('Reset link sent — check your inbox', 'success');
-          document.getElementById('forgot-sheet').classList.remove('open');
+        document.getElementById('send-reset-btn').addEventListener('click', async function () {
+          const email = document.getElementById('reset-email').value.trim();
+          if (!PowerShare.validators.email(email) || !email) {
+            PowerShare.toast('Enter a valid email address', 'error');
+            return;
+          }
+          this.disabled = true;
+          this.textContent = 'Sending…';
+          try {
+            const result = await PowerShareAPI.forgotPassword(email);
+            PowerShare.toast(result?.message || 'If the account exists, a reset link has been sent.', 'success');
+            document.getElementById('forgot-sheet').classList.remove('open');
+          } catch (err) {
+            // Keep the response generic; never reveal whether an email is registered.
+            PowerShare.toast('If the account exists, a reset link will be sent.', 'success');
+          } finally {
+            this.disabled = false;
+            this.textContent = 'Send reset link';
+          }
         });
       </script>
     </main>

@@ -11,111 +11,242 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/responsive.css">
-  
 </head>
-<body class="">
+<body>
   <script src="js/powershare-api.js"></script>
   <script src="js/main.js"></script>
   <script src="js/navigation.js"></script>
   <script src="js/animations.js"></script>
-  <!-- ============ PAYMENT ============ -->
-  <!-- Shared scripts load first (above) so every per-page inline
-       script below can rely on PowerShare/main.js already being
-       defined, even though those inline scripts run immediately
-       as the parser reaches them (they are not deferred). -->
+
   <div class="app-shell">
     <main class="screen screen--no-nav">
-  <header class="topbar">
-    <a href="#" class="back-btn" data-href="booking.html" aria-label="Go back">
-      <span class="material-icons-outlined">arrow_back</span>
-    </a>
-    <h2>Payment</h2>
-    <div class="topbar-actions"><span style="width:40px"></span></div>
-  </header>
+      <header class="topbar">
+        <a href="#" class="back-btn" data-href="booking.html" aria-label="Go back">
+          <span class="material-icons-outlined">arrow_back</span>
+        </a>
+        <h2>Secure checkout</h2>
+        <div class="topbar-actions"><span style="width:40px"></span></div>
+      </header>
+
       <div class="screen-content">
+        <div class="booking-progress">
+          <div class="booking-progress-step active"><span>1</span><small>Booking</small></div>
+          <div class="booking-progress-line"></div>
+          <div class="booking-progress-step active"><span>2</span><small>Payment</small></div>
+          <div class="booking-progress-line"></div>
+          <div class="booking-progress-step"><span>3</span><small>Confirmation</small></div>
+        </div>
+
         <div class="section">
           <h3>Booking summary</h3>
           <div class="card stack-2" style="margin-top:12px" id="booking-summary"></div>
         </div>
 
         <div class="section">
-          <h3>Payment method</h3>
+          <h3>Choose payment method</h3>
           <div class="stack-3" style="margin-top:12px" data-pay-group>
             <label class="pay-method selected">
               <input type="radio" name="pay" value="card" checked style="display:none">
               <span class="radio-dot"></span>
               <span class="material-icons-outlined">credit_card</span>
-              <div><h4>Card payment</h4><p>Visa, Mastercard</p></div>
+              <div style="flex:1"><h4>Card</h4><p>Visa or Mastercard</p></div>
             </label>
             <label class="pay-method">
               <input type="radio" name="pay" value="eft" style="display:none">
               <span class="radio-dot"></span>
               <span class="material-icons-outlined">account_balance</span>
-              <div><h4>EFT</h4><p>Instant bank transfer</p></div>
+              <div style="flex:1"><h4>EFT</h4><p>Bank transfer</p></div>
             </label>
             <label class="pay-method">
               <input type="radio" name="pay" value="cash" style="display:none">
               <span class="radio-dot"></span>
               <span class="material-icons-outlined">payments</span>
-              <div><h4>Cash on pickup</h4><p>Pay at the hub</p></div>
+              <div style="flex:1"><h4>Cash on pickup</h4><p>Pay at the hub</p></div>
             </label>
           </div>
         </div>
 
         <div id="card-fields" class="section">
-          <h3>Card details</h3>
-          <div class="field" style="margin-top:12px">
-            <label for="card-number">Card number</label>
-            <input type="text" id="card-number" placeholder="4242 4242 4242 4242" inputmode="numeric">
+          <div class="card" style="background:linear-gradient(135deg,#173D1A,#2E7D32);color:#fff;border:none;min-height:175px;padding:22px;position:relative;overflow:hidden">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-weight:800;letter-spacing:1px">POWERSHARE</span>
+              <span id="card-brand-preview" style="font-size:12px;font-weight:700">CARD</span>
+            </div>
+            <div style="margin-top:32px;font-size:20px;letter-spacing:2px;font-family:monospace" id="card-preview-number">•••• •••• •••• ••••</div>
+            <div style="display:flex;justify-content:space-between;margin-top:18px;font-size:11px;text-transform:uppercase">
+              <span id="card-preview-name">CARDHOLDER NAME</span><span id="card-preview-expiry">MM/YY</span>
+            </div>
           </div>
-          <div class="field-row">
-            <div class="field"><label for="card-expiry">Expiry</label><input type="text" id="card-expiry" placeholder="MM/YY"></div>
-            <div class="field"><label for="card-cvc">CVC</label><input type="text" id="card-cvc" placeholder="123" inputmode="numeric"></div>
+
+          <div class="card stack-3" style="margin-top:12px">
+            <div class="field">
+              <label for="cardholder-name">Cardholder name</label>
+              <input type="text" id="cardholder-name" autocomplete="cc-name" placeholder="Name on card">
+            </div>
+            <div class="field">
+              <label for="card-number">Card number</label>
+              <div class="input-wrap">
+                <span class="material-icons-outlined">credit_card</span>
+                <input type="text" id="card-number" inputmode="numeric" autocomplete="cc-number" maxlength="19" placeholder="4242 4242 4242 4242">
+              </div>
+              <small id="card-number-hint" class="text-muted">Your card details are validated in the browser and are not sent to the PowerShare API.</small>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="card-expiry">Expiry</label>
+                <input type="text" id="card-expiry" inputmode="numeric" autocomplete="cc-exp" maxlength="5" placeholder="MM/YY">
+              </div>
+              <div class="field">
+                <label for="card-cvc">CVC</label>
+                <input type="password" id="card-cvc" inputmode="numeric" autocomplete="cc-csc" maxlength="4" placeholder="123">
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="screen-content" style="padding-top:0">
-        <button class="btn btn-primary" id="pay-btn">Pay now</button>
+        <div id="alternative-payment-note" class="booking-flow-note" style="display:none">
+          <span class="material-icons-outlined">info</span>
+          <span id="alternative-payment-text"></span>
+        </div>
+
+        <div class="card row-between" style="margin-top:8px">
+          <span>Total due</span>
+          <strong id="total-due" style="font-size:19px;color:var(--color-primary)">R0.00</strong>
+        </div>
+
+        <button class="btn btn-primary btn-block" id="pay-btn" style="margin-top:16px">
+          <span class="material-icons-outlined" style="font-size:18px">lock</span>
+          Pay securely
+        </button>
+        <p class="text-muted" style="font-size:11px;text-align:center;margin-top:10px">
+          PowerShare currently records payments as a university prototype simulation. Card numbers and CVCs are never stored or sent to the backend.
+        </p>
       </div>
 
       <script>
         const booking = PowerShare.store.get('currentBooking');
         const summaryEl = document.getElementById('booking-summary');
+        const totalDue = document.getElementById('total-due');
+
         if (booking?.bookingId) {
+          const total = Number(booking.total || 0);
+          totalDue.textContent = `R${total.toFixed(2)}`;
           summaryEl.innerHTML = `
             <div class="row-between"><span class="text-muted">Booking</span><strong>#${booking.bookingId}</strong></div>
-            <div class="row-between"><span class="text-muted">Battery</span><strong>${booking.batteryName}</strong></div>
+            <div class="row-between"><span class="text-muted">Battery</span><strong>${String(booking.batteryName || '')}</strong></div>
             <div class="row-between"><span class="text-muted">Dates</span><strong>${booking.start} → ${booking.end}</strong></div>
-            <div class="divider" style="margin:8px 0"></div>
-            <div class="row-between"><span style="font-weight:700">Total</span><strong style="color:var(--color-primary);font-size:17px">R${Number(booking.total || 0).toFixed(2)}</strong></div>`;
+            <div class="row-between"><span class="text-muted">Quantity</span><strong>${booking.qty || 1}</strong></div>
+          `;
         } else {
           summaryEl.innerHTML = '<p>No active booking. Please return to the battery catalogue.</p>';
           document.getElementById('pay-btn').disabled = true;
         }
 
-        document.querySelectorAll('input[name="pay"]').forEach(radio => {
-          radio.addEventListener('change', () => { document.getElementById('card-fields').style.display = radio.value === 'card' ? '' : 'none'; });
+        const numberInput = document.getElementById('card-number');
+        const expiryInput = document.getElementById('card-expiry');
+        const cvcInput = document.getElementById('card-cvc');
+        const nameInput = document.getElementById('cardholder-name');
+        const cardFields = document.getElementById('card-fields');
+        const altNote = document.getElementById('alternative-payment-note');
+        const altText = document.getElementById('alternative-payment-text');
+        const payBtn = document.getElementById('pay-btn');
+
+        function luhnValid(value) {
+          const digits = value.replace(/\D/g, '');
+          if (digits.length < 13 || digits.length > 19) return false;
+          let sum = 0, doubleDigit = false;
+          for (let i = digits.length - 1; i >= 0; i--) {
+            let n = Number(digits[i]);
+            if (doubleDigit) { n *= 2; if (n > 9) n -= 9; }
+            sum += n; doubleDigit = !doubleDigit;
+          }
+          return sum % 10 === 0;
+        }
+
+        function cardBrand(number) {
+          const digits = number.replace(/\D/g, '');
+          if (/^4/.test(digits)) return 'VISA';
+          if (/^(5[1-5]|2[2-7])/.test(digits)) return 'MASTERCARD';
+          return 'CARD';
+        }
+
+        numberInput.addEventListener('input', () => {
+          const digits = numberInput.value.replace(/\D/g, '').slice(0, 19);
+          numberInput.value = digits.replace(/(.{4})/g, '$1 ').trim();
+          document.getElementById('card-preview-number').textContent =
+            digits ? (digits + '••••••••••••••••').slice(0,16).replace(/(.{4})/g,'$1 ').trim() : '•••• •••• •••• ••••';
+          document.getElementById('card-brand-preview').textContent = cardBrand(digits);
         });
 
-        document.getElementById('pay-btn').addEventListener('click', async () => {
+        expiryInput.addEventListener('input', () => {
+          let digits = expiryInput.value.replace(/\D/g, '').slice(0,4);
+          if (digits.length > 2) digits = digits.slice(0,2) + '/' + digits.slice(2);
+          expiryInput.value = digits;
+          document.getElementById('card-preview-expiry').textContent = expiryInput.value || 'MM/YY';
+        });
+
+        cvcInput.addEventListener('input', () => {
+          cvcInput.value = cvcInput.value.replace(/\D/g, '').slice(0,4);
+        });
+
+        nameInput.addEventListener('input', () => {
+          document.getElementById('card-preview-name').textContent =
+            nameInput.value.trim().toUpperCase().slice(0,24) || 'CARDHOLDER NAME';
+        });
+
+        function expiryValid(value) {
+          const match = /^(0[1-9]|1[0-2])\/([0-9]{2})$/.exec(value);
+          if (!match) return false;
+          const month = Number(match[1]);
+          const year = 2000 + Number(match[2]);
+          const now = new Date();
+          return year > now.getFullYear() || (year === now.getFullYear() && month >= now.getMonth() + 1);
+        }
+
+        document.querySelectorAll('input[name="pay"]').forEach(radio => {
+          radio.addEventListener('change', () => {
+            const isCard = radio.checked && radio.value === 'card';
+            cardFields.style.display = isCard ? '' : 'none';
+            altNote.style.display = isCard ? 'none' : '';
+            altText.textContent = radio.value === 'eft'
+              ? 'EFT is recorded as the selected payment method. Follow the bank-transfer instructions supplied by PowerShare.'
+              : 'Cash on pickup is recorded as the selected payment method and is settled at the pickup hub.';
+            document.querySelectorAll('.pay-method').forEach(label => {
+              label.classList.toggle('selected', label.querySelector('input').checked);
+            });
+          });
+        });
+
+        payBtn.addEventListener('click', async () => {
           if (!booking?.bookingId) return;
           const method = document.querySelector('input[name="pay"]:checked')?.value?.toUpperCase();
-          const btn = document.getElementById('pay-btn');
-          btn.disabled = true; btn.textContent = 'Processing…';
+
+          if (method === 'CARD') {
+            if (!nameInput.value.trim()) return PowerShare.toast('Enter the cardholder name.', 'error');
+            if (!luhnValid(numberInput.value)) return PowerShare.toast('Enter a valid card number.', 'error');
+            if (!expiryValid(expiryInput.value)) return PowerShare.toast('Enter a valid future expiry date.', 'error');
+            if (!/^\d{3,4}$/.test(cvcInput.value)) return PowerShare.toast('Enter a valid CVC.', 'error');
+          }
+
+          payBtn.disabled = true;
+          payBtn.textContent = 'Processing…';
           try {
             await PowerShareAPI.pay(booking.bookingId, method);
-            PowerShare.store.set('currentBooking', { ...booking, paymentMethod: method, paymentCompleted: true });
+            // Only store non-sensitive payment metadata. Never store card number/CVC.
+            PowerShare.store.set('currentBooking', {
+              ...booking,
+              paymentMethod: method,
+              paymentCompleted: true
+            });
             window.location.href = 'booking-confirmation.html';
           } catch (err) {
             PowerShare.toast(err.message || 'Payment could not be processed', 'error');
-            btn.disabled = false; btn.textContent = 'Pay now';
+            payBtn.disabled = false;
+            payBtn.innerHTML = '<span class="material-icons-outlined" style="font-size:18px">lock</span> Pay securely';
           }
         });
       </script>
     </main>
-
   </div>
-  
 </body>
 </html>

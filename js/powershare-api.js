@@ -13,8 +13,7 @@
  *   </script>
  */
 const PowerShareAPI = (() => {
-  // Point this at wherever the Spring Boot app is actually running.
-  const BASE_URL = 'https://powersharebackend.onrender.com/api';;
+  const BASE_URL = 'https://powersharebackend.onrender.com/api';
   const TOKEN_KEY = 'powershare_token';
 
   function getToken() {
@@ -30,34 +29,55 @@ const PowerShareAPI = (() => {
   }
 
   /**
-   * Core fetch wrapper. Attaches the Bearer token automatically, JSON-encodes
-   * the body, and throws an Error whose .message is the backend's own
-   * message field (from GlobalExceptionHandler's ApiError shape) so a
-   * .catch(err => alert(err.message)) just works everywhere.
+   * Core fetch wrapper.
+   * Automatically attaches the Bearer token, handles JSON,
+   * and clears invalid authentication tokens on 401/403.
    */
   async function request(path, { method = 'GET', body, auth = true } = {}) {
-    const headers = { 'Content-Type': 'application/json' };
+    const headers = {
+      'Content-Type': 'application/json'
+    };
 
     if (auth) {
       const token = getToken();
-      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
     }
 
     const response = await fetch(`${BASE_URL}${path}`, {
       method,
       headers,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: body !== undefined ? JSON.stringify(body) : undefined
     });
 
-    if (response.status === 204) return null;
+    if (response.status === 204) {
+      return null;
+    }
 
     const data = await response.json().catch(() => null);
 
     if (!response.ok) {
-      const message = (data && data.message) || `Request failed (${response.status})`;
+      if (
+        auth &&
+        (response.status === 401 || response.status === 403)
+      ) {
+        clearToken();
+      }
+
+      const message =
+        (data && data.message) ||
+        `Request failed (${response.status})`;
+
       const error = new Error(message);
+
       error.status = response.status;
-      error.body = data; // full ApiError, including validationErrors when present
+      error.body = data;
+      error.requiresLogin =
+        auth &&
+        (response.status === 401 || response.status === 403);
+
       throw error;
     }
 
@@ -65,137 +85,369 @@ const PowerShareAPI = (() => {
   }
 
   return {
-    // ---------------------------------------------------------------
-    // Auth
-    // ---------------------------------------------------------------
+
+    // ============================================================
+    // AUTHENTICATION
+    // ============================================================
+
     register: (payload) =>
-      request('/auth/register', { method: 'POST', body: payload, auth: false }),
+      request('/auth/register', {
+        method: 'POST',
+        body: payload,
+        auth: false
+      }),
 
     login: async (email, password) => {
       const data = await request('/auth/login', {
         method: 'POST',
-        body: { email, password },
-        auth: false,
+        body: {
+          email,
+          password
+        },
+        auth: false
       });
+
       setToken(data.token);
+
       return data;
     },
 
+    forgotPassword: (email) =>
+      request('/auth/forgot-password', {
+        method: 'POST',
+        body: {
+          email
+        },
+        auth: false
+      }),
+
+    resetPassword: (token, newPassword) =>
+      request('/auth/reset-password', {
+        method: 'POST',
+        body: {
+          token,
+          newPassword
+        },
+        auth: false
+      }),
+
+    changePassword: (currentPassword, newPassword) =>
+      request('/users/me/password', {
+        method: 'PUT',
+        body: {
+          currentPassword,
+          newPassword
+        }
+      }),
+
+    deactivateAccount: () =>
+      request('/users/me', {
+        method: 'DELETE'
+      }),
+
     logout: () => clearToken(),
+
     isLoggedIn: () => !!getToken(),
 
-    // ---------------------------------------------------------------
-    // Profile
-    // ---------------------------------------------------------------
-    getMyProfile: () => request('/users/me'),
-    updateMyProfile: (payload) => request('/users/me', { method: 'PUT', body: payload }),
 
-    // ---------------------------------------------------------------
-    // Batteries (catalogue)
-    // ---------------------------------------------------------------
+    // ============================================================
+    // PROFILE
+    // ============================================================
+
+    getMyProfile: () =>
+      request('/users/me'),
+
+    updateMyProfile: (payload) =>
+      request('/users/me', {
+        method: 'PUT',
+        body: payload
+      }),
+
+
+    // ============================================================
+    // BATTERIES
+    // ============================================================
+
     getBatteries: (availableOnly = false) =>
-      request(`/batteries?availableOnly=${availableOnly}`),
-    searchBatteries: (query) => request(`/batteries/search?query=${encodeURIComponent(query)}`),
-    getBatteryCategories: () => request('/battery-categories'),
-    getBattery: (id) => request(`/batteries/${id}`),
+      request(
+        `/batteries?availableOnly=${availableOnly}`
+      ),
 
-    // ---------------------------------------------------------------
-    // Bookings
-    // ---------------------------------------------------------------
-    // payload: { batteryId, startDate: 'YYYY-MM-DD', endDate: 'YYYY-MM-DD', quantity }
-    createBooking: (payload) => request('/bookings', { method: 'POST', body: payload }),
-    getMyBookings: () => request('/bookings'),
-    getBooking: (id) => request(`/bookings/${id}`),
-    cancelBooking: (id) => request(`/bookings/${id}/cancel`, { method: 'PUT' }),
+    searchBatteries: (query) =>
+      request(
+        `/batteries/search?query=${encodeURIComponent(query)}`
+      ),
 
-    // ---------------------------------------------------------------
-    // Payments (simulated — see PaymentService on the backend)
-    // ---------------------------------------------------------------
+    getBatteryCategories: () =>
+      request('/battery-categories'),
+
+    getBattery: (id) =>
+      request(`/batteries/${id}`),
+
+
+    // ============================================================
+    // BOOKINGS
+    // ============================================================
+
+    createBooking: (payload) =>
+      request('/bookings', {
+        method: 'POST',
+        body: payload
+      }),
+
+    getMyBookings: () =>
+      request('/bookings'),
+
+    getBooking: (id) =>
+      request(`/bookings/${id}`),
+
+    getBookingProgress: (id) =>
+      request(`/bookings/${id}/progress`),
+
+    cancelBooking: (id) =>
+      request(`/bookings/${id}/cancel`, {
+        method: 'PUT'
+      }),
+
+
+    // ============================================================
+    // PAYMENTS
+    // ============================================================
+
+    /*
+     * Current backend payment implementation is simulated.
+     *
+     * method:
+     * CARD | EFT | CASH
+     */
     pay: (bookingId, method) =>
-      request('/payments', { method: 'POST', body: { bookingId, method } }), // method: 'CARD' | 'EFT' | 'CASH'
-    getPaymentsForBooking: (bookingId) => request(`/payments/booking/${bookingId}`),
+      request('/payments', {
+        method: 'POST',
+        body: {
+          bookingId,
+          method
+        }
+      }),
 
-    // ---------------------------------------------------------------
-    // Rentals
-    // ---------------------------------------------------------------
-    getMyRentals: () => request('/rentals'),
-    getRental: (id) => request(`/rentals/${id}`),
-    extendRental: (id, newDueDate) => // newDueDate: 'YYYY-MM-DD'
-      request(`/rentals/${id}/extend?newDueDate=${newDueDate}`, { method: 'PUT' }),
+    getPaymentsForBooking: (bookingId) =>
+      request(`/payments/booking/${bookingId}`),
 
-    // ---------------------------------------------------------------
-    // Notifications
-    // ---------------------------------------------------------------
-    getMyNotifications: (unreadOnly = false) => request(`/notifications?unreadOnly=${unreadOnly}`),
-    markNotificationRead: (id) => request(`/notifications/${id}/read`, { method: 'PUT' }),
 
-    // ---------------------------------------------------------------
-    // Support
-    // ---------------------------------------------------------------
-    createSupportRequest: (payload) => request('/support', { method: 'POST', body: payload }), // { subject, message }
-    getMySupportRequests: () => request('/support'),
-    getSupportRequest: (id) => request(`/support/${id}`),
+    // ============================================================
+    // RENTALS
+    // ============================================================
 
-    // ---------------------------------------------------------------
-    // Admin — all of these require an account with the ADMIN role
-    // ---------------------------------------------------------------
+    getMyRentals: () =>
+      request('/rentals'),
+
+    getRental: (id) =>
+      request(`/rentals/${id}`),
+
+    extendRental: (id, newDueDate) =>
+      request(
+        `/rentals/${id}/extend?newDueDate=${newDueDate}`,
+        {
+          method: 'PUT'
+        }
+      ),
+
+
+    // ============================================================
+    // NOTIFICATIONS
+    // ============================================================
+
+    getMyNotifications: (unreadOnly = false) =>
+      request(
+        `/notifications?unreadOnly=${unreadOnly}`
+      ),
+
+    markNotificationRead: (id) =>
+      request(`/notifications/${id}/read`, {
+        method: 'PUT'
+      }),
+
+
+    // ============================================================
+    // SUPPORT
+    // ============================================================
+
+    createSupportRequest: (payload) =>
+      request('/support', {
+        method: 'POST',
+        body: payload
+      }),
+
+    getMySupportRequests: () =>
+      request('/support'),
+
+    getSupportRequest: (id) =>
+      request(`/support/${id}`),
+
+
+    // ============================================================
+    // ADMIN
+    // ============================================================
+
     admin: {
-      // Bookings
-      listBookings: (status = 'PENDING') => request(`/admin/bookings?status=${status}`),
-      approveBooking: (id) => request(`/admin/bookings/${id}/approve`, { method: 'PUT' }),
+
+      // ----------------------------------------------------------
+      // BOOKINGS
+      // ----------------------------------------------------------
+
+      listBookings: (status = 'PENDING') =>
+        request(
+          `/admin/bookings?status=${status}`
+        ),
+
+      approveBooking: (id) =>
+        request(
+          `/admin/bookings/${id}/approve`,
+          {
+            method: 'PUT'
+          }
+        ),
+
       rejectBooking: (id, reason) =>
-        request(`/admin/bookings/${id}/reject${reason ? `?reason=${encodeURIComponent(reason)}` : ''}`, {
-          method: 'PUT',
+        request(
+          `/admin/bookings/${id}/reject${
+            reason
+              ? `?reason=${encodeURIComponent(reason)}`
+              : ''
+          }`,
+          {
+            method: 'PUT'
+          }
+        ),
+
+
+      // ----------------------------------------------------------
+      // BATTERIES
+      // ----------------------------------------------------------
+
+      listAllBatteries: () =>
+        request('/admin/batteries'),
+
+      createBattery: (payload) =>
+        request('/admin/batteries', {
+          method: 'POST',
+          body: payload
         }),
 
-      // Batteries
-      listAllBatteries: () => request('/admin/batteries'),
-      createBattery: (payload) => request('/admin/batteries', { method: 'POST', body: payload }),
-      updateBattery: (id, payload) => request(`/admin/batteries/${id}`, { method: 'PUT', body: payload }),
-      deactivateBattery: (id) => request(`/admin/batteries/${id}`, { method: 'DELETE' }),
+      updateBattery: (id, payload) =>
+        request(`/admin/batteries/${id}`, {
+          method: 'PUT',
+          body: payload
+        }),
 
-      // Rentals & returns
-      collectRental: (id) => request(`/rentals/${id}/collect`, { method: 'PUT' }),
-      processReturn: (payload) => request('/returns', { method: 'POST', body: payload }),
-      // payload: { rentalId, conditionOnReturn, damageReported, damageDescription }
+      deactivateBattery: (id) =>
+        request(`/admin/batteries/${id}`, {
+          method: 'DELETE'
+        }),
 
-      // Users
-      listUsers: () => request('/admin/users'),
-      getUser: (id) => request(`/admin/users/${id}`),
-      setUserStatus: (id, status) => // status: 'ACTIVE' | 'SUSPENDED' | 'INACTIVE'
-        request(`/admin/users/${id}/status?status=${status}`, { method: 'PUT' }),
 
-      // Support triage
-      listSupportRequests: (status = 'OPEN') => request(`/support?status=${status}`),
+      // ----------------------------------------------------------
+      // RENTALS & RETURNS
+      // ----------------------------------------------------------
+
+      collectRental: (id) =>
+        request(`/rentals/${id}/collect`, {
+          method: 'PUT'
+        }),
+
+      processReturn: (payload) =>
+        request('/returns', {
+          method: 'POST',
+          body: payload
+        }),
+
+
+      // ----------------------------------------------------------
+      // USERS
+      // ----------------------------------------------------------
+
+      listUsers: () =>
+        request('/admin/users'),
+
+      getUser: (id) =>
+        request(`/admin/users/${id}`),
+
+      setUserStatus: (id, status) =>
+        request(
+          `/admin/users/${id}/status?status=${status}`,
+          {
+            method: 'PUT'
+          }
+        ),
+
+
+      // ----------------------------------------------------------
+      // SUPPORT
+      // ----------------------------------------------------------
+
+      listSupportRequests: (status = 'OPEN') =>
+        request(
+          `/support?status=${status}`
+        ),
+
       updateSupportStatus: (id, status) =>
-        request(`/support/${id}/status?status=${status}`, { method: 'PUT' }),
+        request(
+          `/support/${id}/status?status=${status}`,
+          {
+            method: 'PUT'
+          }
+        ),
 
-      // Reporting
-      dashboardStats: () => request('/admin/reports/dashboard'),
+
+      // ----------------------------------------------------------
+      // REPORTING
+      // ----------------------------------------------------------
+
+      dashboardStats: () =>
+        request('/admin/reports/dashboard')
     },
 
-    // ---------------------------------------------------------------
-    // Display helpers — NOT backend data. The Battery entity has no icon
-    // or live charge-percentage field, so these approximate something
-    // visual from what the backend actually returns (category name /
-    // physical condition) purely for the UI. Safe to change or delete
-    // once you decide what these should really show.
-    // ---------------------------------------------------------------
+
+    // ============================================================
+    // DISPLAY HELPERS
+    // ============================================================
+
     iconForCategory: (categoryName) => {
-      const name = (categoryName || '').toLowerCase();
-      if (name.includes('compact')) return 'battery_std';
-      if (name.includes('heavy')) return 'battery_charging_full';
-      return 'battery_full'; // Portable / anything else
+
+      const name =
+        (categoryName || '').toLowerCase();
+
+      if (name.includes('compact')) {
+        return 'battery_std';
+      }
+
+      if (name.includes('heavy')) {
+        return 'battery_charging_full';
+      }
+
+      return 'battery_full';
     },
+
 
     conditionToChargePct: (condition) => {
+
       switch (condition) {
-        case 'EXCELLENT': return 95;
-        case 'GOOD': return 75;
-        case 'FAIR': return 50;
-        case 'POOR': return 25;
-        default: return 80;
+
+        case 'EXCELLENT':
+          return 95;
+
+        case 'GOOD':
+          return 75;
+
+        case 'FAIR':
+          return 50;
+
+        case 'POOR':
+          return 25;
+
+        default:
+          return 80;
       }
-    },
+    }
+
   };
 })();

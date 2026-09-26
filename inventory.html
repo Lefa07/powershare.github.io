@@ -93,7 +93,7 @@
         <div class="overlay" id="add-battery-sheet">
           <div class="sheet" style="max-width:460px">
             <div class="sheet-handle"></div>
-            <h3>Add battery to fleet</h3>
+            <h3>Add battery</h3>
             <div class="field-row" style="margin-top:16px">
               <div class="field"><label for="add-model">Model</label><input type="text" id="add-model" placeholder="EcoFlow DELTA 2"></div>
               <div class="field"><label for="add-name">Display name</label><input type="text" id="add-name" placeholder="DELTA 2"></div>
@@ -108,7 +108,7 @@
               <div class="field"><label for="add-deposit">Deposit (R)</label><input type="number" id="add-deposit" placeholder="1500"></div>
             </div>
             <div class="field"><label for="add-description">Description (optional)</label><textarea id="add-description" rows="2" placeholder="Short blurb for the catalogue"></textarea></div>
-            <button class="btn btn-primary" id="add-battery-btn">Add to fleet</button>
+            <button class="btn btn-primary" id="add-battery-btn">Add battery</button>
           </div>
         </div>
 
@@ -197,7 +197,7 @@
             PowerShareAPI.admin.createBattery(payload)
               .then(() => {
                 document.getElementById('add-battery-sheet').classList.remove('open');
-                PowerShare.toast('Battery added to fleet', 'success');
+                PowerShare.toast('Battery added successfully', 'success');
                 ['add-model', 'add-name', 'add-capacity', 'add-runtime', 'add-rate', 'add-deposit', 'add-description']
                   .forEach(id => document.getElementById(id).value = '');
                 loadInventory();
@@ -208,7 +208,7 @@
               })
               .finally(() => {
                 this.disabled = false;
-                this.textContent = 'Add to fleet';
+                this.textContent = 'Add battery';
               });
           });
         </script>

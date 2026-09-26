@@ -88,6 +88,34 @@
           <div data-panel-group="admin-bookings" data-panel="completed" style="display:none"><table class="data-table"><thead><tr><th>Booking</th><th>Customer</th><th>Battery</th><th>Total</th></tr></thead><tbody id="tbl-completed"></tbody></table></div>
         </div>
 
+      <div class="overlay" id="reject-reason-sheet">
+        <div class="sheet" style="max-width:520px">
+          <div class="sheet-handle"></div>
+          <h3>Reject booking</h3>
+          <p style="margin-top:6px;color:var(--color-text-muted)">Select the reason that should be recorded for the customer.</p>
+          <div class="field" style="margin-top:16px">
+            <label for="reject-reason-select">Reason</label>
+            <select id="reject-reason-select">
+              <option value="">Select a reason</option>
+              <option>Battery unavailable</option>
+              <option>Battery requires maintenance</option>
+              <option>Requested dates unavailable</option>
+              <option>Payment issue</option>
+              <option>Customer information incomplete</option>
+              <option>Pickup location unavailable</option>
+              <option>Delivery unavailable</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field" id="other-reason-field" style="display:none">
+            <label for="other-reason">Additional reason</label>
+            <textarea id="other-reason" rows="3" maxlength="500" placeholder="Enter the reason"></textarea>
+          </div>
+          <button class="btn btn-danger" id="confirm-reject-btn">Reject booking</button>
+          <button class="btn btn-ghost" id="cancel-reject-btn" style="margin-top:4px">Cancel</button>
+        </div>
+      </div>
+
         <script>
           PowerShareAPI.getMyProfile()
             .then((user) => {
@@ -122,6 +150,62 @@
               .catch(() => { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--color-text-muted);padding:24px">Could not load</td></tr>`; });
           }
 
+          let rejectBookingId = null;
+          let rejectButton = null;
+
+          function openRejectSheet(id, button) {
+            rejectBookingId = id;
+            rejectButton = button;
+            document.getElementById('reject-reason-select').value = '';
+            document.getElementById('other-reason').value = '';
+            document.getElementById('other-reason-field').style.display = 'none';
+            document.getElementById('reject-reason-sheet').classList.add('open');
+          }
+
+          document.getElementById('reject-reason-select').addEventListener('change', (e) => {
+            document.getElementById('other-reason-field').style.display =
+              e.target.value === 'Other' ? '' : 'none';
+          });
+
+          document.getElementById('cancel-reject-btn').addEventListener('click', () => {
+            document.getElementById('reject-reason-sheet').classList.remove('open');
+            rejectBookingId = null;
+            rejectButton = null;
+          });
+
+          document.getElementById('confirm-reject-btn').addEventListener('click', async () => {
+            const selected = document.getElementById('reject-reason-select').value;
+            const other = document.getElementById('other-reason').value.trim();
+            if (!selected) {
+              PowerShare.toast('Select a rejection reason.', 'error');
+              return;
+            }
+            const reason = selected === 'Other' ? other : selected;
+            if (selected === 'Other' && !reason) {
+              PowerShare.toast('Enter the reason for selecting Other.', 'error');
+              return;
+            }
+
+            const confirmBtn = document.getElementById('confirm-reject-btn');
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = 'Rejecting…';
+            if (rejectButton) rejectButton.disabled = true;
+
+            try {
+              await PowerShareAPI.admin.rejectBooking(rejectBookingId, reason);
+              PowerShare.toast('Booking rejected', 'success');
+              document.getElementById('reject-reason-sheet').classList.remove('open');
+              loadTab('PENDING');
+              loadTab('REJECTED');
+            } catch (err) {
+              PowerShare.toast(err.message || 'Could not reject booking', 'error');
+              if (rejectButton) rejectButton.disabled = false;
+            } finally {
+              confirmBtn.disabled = false;
+              confirmBtn.textContent = 'Reject booking';
+            }
+          });
+
           function loadAll() {
             STATUSES.forEach(loadTab);
           }
@@ -144,18 +228,7 @@
             });
             document.querySelectorAll('.reject-btn').forEach((btn) => {
               btn.onclick = function () {
-                const reason = window.prompt('Reason for rejecting (optional):', '') || undefined;
-                this.disabled = true;
-                PowerShareAPI.admin.rejectBooking(this.dataset.id, reason)
-                  .then(() => {
-                    PowerShare.toast('Booking rejected', 'success');
-                    loadTab('PENDING');
-                    loadTab('REJECTED');
-                  })
-                  .catch((err) => {
-                    PowerShare.toast(err.message || 'Could not reject booking', 'error');
-                    this.disabled = false;
-                  });
+                openRejectSheet(this.dataset.id, this);
               };
             });
           }

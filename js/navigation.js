@@ -1,983 +1,1025 @@
-
 /* ============================================================
    PowerShare — navigation.js
+
    Shared user navigation, theme persistence, language preferences,
    tabs, sheets, filters, password toggles and steppers.
-   Admin pages are intentionally excluded from theme/language changes.
+
+   Admin pages are intentionally excluded from theme/language
+   changes.
    ============================================================ */
 
 (function () {
+
   const THEME_KEY = 'ps_theme';
   const LANGUAGE_KEY = 'ps_language';
 
+
+  // ============================================================
+  // PAGE DETECTION
+  // ============================================================
+
   function isAdminPage() {
+
     return !!document.querySelector('.admin-sidebar') ||
-      /admin-dashboard|inventory|customers|reports|business-settings/.test(window.location.pathname);
+      /admin-dashboard|inventory|customers|reports|business-settings/.test(
+        window.location.pathname
+      );
   }
+
+
+  // ============================================================
+  // THEME
+  // ============================================================
 
   function applyTheme(theme) {
-    if (isAdminPage()) return;
 
-    document.documentElement.classList.toggle(
-      'dark-mode',
-      theme === 'dark'
+    if (isAdminPage()) {
+      return;
+    }
+
+    const root = document.documentElement;
+
+    if (theme === 'dark') {
+      root.classList.add('dark');
+      document.body.classList.add('dark-mode');
+    } else {
+      root.classList.remove('dark');
+      document.body.classList.remove('dark-mode');
+    }
+
+    localStorage.setItem(
+      THEME_KEY,
+      theme
     );
 
-    document.body.classList.toggle(
-      'dark-mode',
-      theme === 'dark'
-    );
+    const toggle =
+      document.querySelector(
+        '#dark-mode-toggle, [data-dark-mode-toggle]'
+      );
+
+    if (toggle) {
+
+      if (
+        toggle.type === 'checkbox' ||
+        toggle.type === 'radio'
+      ) {
+        toggle.checked =
+          theme === 'dark';
+      }
+
+      toggle.setAttribute(
+        'aria-pressed',
+        theme === 'dark'
+      );
+    }
   }
 
-  // Apply immediately to avoid a light-mode flash.
-  try {
-    applyTheme(localStorage.getItem(THEME_KEY) || 'light');
-  } catch (e) {}
 
-  const translations = {
+  function initTheme() {
+
+    if (isAdminPage()) {
+      return;
+    }
+
+    const savedTheme =
+      localStorage.getItem(THEME_KEY) ||
+      'light';
+
+    applyTheme(savedTheme);
+
+    const toggle =
+      document.querySelector(
+        '#dark-mode-toggle, [data-dark-mode-toggle]'
+      );
+
+    if (toggle) {
+
+      toggle.addEventListener(
+        'change',
+        function () {
+
+          const theme =
+            this.checked
+              ? 'dark'
+              : 'light';
+
+          applyTheme(theme);
+        }
+      );
+
+      toggle.addEventListener(
+        'click',
+        function () {
+
+          if (
+            this.type !== 'checkbox' &&
+            this.type !== 'radio'
+          ) {
+
+            const current =
+              document.documentElement.classList.contains(
+                'dark'
+              );
+
+            applyTheme(
+              current
+                ? 'light'
+                : 'dark'
+            );
+          }
+        }
+      );
+    }
+  }
+
+
+  // ============================================================
+  // LANGUAGE
+  // ============================================================
+
+  const TRANSLATIONS = {
+
     nso: {
-    // Navigation
-    "Home": "Gae",
-    "Batteries": "Dibetri",
-    "Rentals": "Dikhiro",
-    "My Rentals": "Dikhiro tša ka",
-    "Notifications": "Ditsebišo",
-    "Profile": "Profaele",
-    "Settings": "Dipeakanyo",
-    "About": "Ka ga rena",
-    "Support": "Thekgo",
 
-    // Home
-    "Good morning": "Thobela",
-    "Good afternoon": "Thobela",
-    "Good evening": "Thobela",
-    "Search EcoFlow batteries...": "Nyaka dibetri tša EcoFlow...",
-    "Quick actions": "Ditiro tša ka pela",
-    "Rent now": "Hira bjale",
-    "Return": "Bušetša",
-    "Featured batteries": "Dibetri tše di kgethilwego",
-    "See all": "Bona ka moka",
-    "Promotions": "Dikabelo",
-    "Nearby pickup locations": "Mafelo a kgauswi a go tšea",
-    "View map": "Bona mmapa",
+      // Navigation
+      'Home': 'Gae',
+      'Batteries': 'Dibetri',
+      'Rentals': 'Dikhiro',
+      'My Rentals': 'Dikhiro tša ka',
+      'Notifications': 'Ditsebišo',
+      'Profile': 'Profaele',
+      'Settings': 'Dipeakanyo',
+      'About': 'Ka ga rena',
+      'Support': 'Thekgo',
 
-    // Catalogue
-    "All": "Ka moka",
-    "Compact": "E nyenyane",
-    "Portable": "E rwalwa",
-    "Heavy Duty": "Ya mošomo o boima",
-    "Filter batteries": "Hlatholla dibetri",
-    "Pickup location": "Lefelo la go tšea",
-    "Any hub": "Seteišene sefe goba sefe",
-    "Price range": "Mellwane ya ditheko",
-    "Any price": "Theko efe goba efe",
-    "Under R100/day": "Ka tlase ga R100/letšatši",
-    "R100 – R250/day": "R100 – R250/letšatši",
-    "Over R250/day": "Ka godimo ga R250/letšatši",
-    "Only show available now": "Bontšha tšeo di lego gona gona bjale",
-    "Apply filters": "Diriša dihlarollo",
-    "Available": "E gona",
-    "Available now": "E gona gona bjale",
-    "Unavailable": "Ga e gona",
-    "View & book": "Bona gomme o hire",
-    "View Details": "Bona dintlha",
-    "Search": "Nyaka",
-    "No batteries available": "Ga go na dibetri tšeo di hwetšagalago",
+      // Home
+      'Good morning': 'Thobela',
+      'Good afternoon': 'Thobela',
+      'Good evening': 'Thobela',
+      'Search EcoFlow batteries...':
+        'Nyaka dibetri tša EcoFlow...',
+      'Quick actions': 'Ditiro tša ka pela',
+      'Rent now': 'Hira bjale',
+      'Return': 'Bušetša',
+      'Featured batteries':
+        'Dibetri tše di kgethilwego',
+      'See all': 'Bona ka moka',
+      'Promotions': 'Dikabelo',
+      'Nearby pickup locations':
+        'Mafelo a kgauswi a go tšea',
+      'View map': 'Bona mmapa',
 
-    // Battery details
-    "Battery details": "Dintlha tša betri",
-    "Capacity": "Bokgoni",
-    "Runtime": "Nako ya go šoma",
-    "Daily rate": "Tefelo ya letšatši",
-    "Status": "Boemo",
-    "Book now": "Hira bjale",
-    "Battery": "Betri",
+      // Catalogue
+      'All': 'Ka moka',
+      'Compact': 'E nyenyane',
+      'Portable': 'E rwalwa',
+      'Heavy Duty': 'Ya mošomo o boima',
+      'Filter batteries': 'Hlatholla dibetri',
+      'Pickup location':
+        'Lefelo la go tšea',
+      'Any hub':
+        'Seteišene sefe goba sefe',
+      'Price range': 'Mellwane ya ditheko',
+      'Any price': 'Theko efe goba efe',
+      'Under R100/day':
+        'Ka tlase ga R100/letšatši',
+      'R100 – R250/day':
+        'R100 – R250/letšatši',
+      'Over R250/day':
+        'Ka godimo ga R250/letšatši',
+      'Only show available now':
+        'Bontšha tšeo di lego gona gona bjale',
+      'Apply filters':
+        'Diriša dihlarollo',
+      'Available': 'E gona',
+      'Available now':
+        'E gona gona bjale',
+      'Unavailable': 'Ga e gona',
+      'View & book':
+        'Bona gomme o hire',
+      'View Details': 'Bona dintlha',
+      'Search': 'Nyaka',
+      'No batteries available':
+        'Ga go na dibetri tšeo di hwetšagalago',
 
-    // Booking
-    "Booking": "Peeletšo",
-    "Choose a battery": "Kgetha betri",
-    "Choose a Battery": "Kgetha betri",
-    "Rental details": "Dintlha tša khiro",
-    "Set rental details": "Beakanya dintlha tša khiro",
-    "Rental dates": "Matšatši a khiro",
-    "Pickup date": "Letšatši la go tšea",
-    "Return date": "Letšatši la go bušetša",
-    "Pickup or delivery": "Go tšea goba go romelwa",
-    "Pickup": "Go tšea",
-    "Delivery": "Go romelwa",
-    "Delivery address": "Aterese ya go romelwa",
-    "Quantity": "Palo",
-    "Number of batteries": "Palo ya dibetri",
-    "Price summary": "Kakaretšo ya theko",
-    "Continue": "Tšwela pele",
-    "Continue to payment": "Tšwela pele go tefo",
-    "Back": "Morago",
-    "Confirm": "Kgonthiša",
-    "Booking total": "Palomoka ya peeletšo",
+      // Battery details
+      'Battery details':
+        'Dintlha tša betri',
+      'Capacity': 'Bokgoni',
+      'Runtime': 'Nako ya go šoma',
+      'Daily rate': 'Tefelo ya letšatši',
+      'Status': 'Boemo',
+      'Book now': 'Hira bjale',
+      'Battery': 'Betri',
 
-    // Payment
-    "Payment": "Tefo",
-    "Payment method": "Mokgwa wa tefo",
-    "Card payment": "Tefo ka karata",
-    "Card details": "Dintlha tša karata",
-    "Card number": "Nomoro ya karata",
-    "Expiry": "Letšatši la go fela",
-    "CVC": "CVC",
-    "EFT": "EFT",
-    "Cash on pickup": "Tšhelete ge o tšea",
-    "Pay now": "Lefa bjale",
+      // Booking
+      'Booking': 'Peeletšo',
+      'Choose a battery':
+        'Kgetha betri',
+      'Choose a Battery':
+        'Kgetha betri',
+      'Rental details':
+        'Dintlha tša khiro',
+      'Set rental details':
+        'Beakanya dintlha tša khiro',
+      'Rental dates':
+        'Matšatši a khiro',
+      'Pickup date':
+        'Letšatši la go tšea',
+      'Return date':
+        'Letšatši la go bušetša',
+      'Pickup or delivery':
+        'Go tšea goba go romelwa',
+      'Pickup': 'Go tšea',
+      'Delivery': 'Go romelwa',
+      'Delivery address':
+        'Aterese ya go romelwa',
+      'Quantity': 'Palo',
+      'Number of batteries':
+        'Palo ya dibetri',
+      'Price summary':
+        'Kakaretšo ya theko',
+      'Continue': 'Tšwela pele',
+      'Continue to payment':
+        'Tšwela pele go tefo',
+      'Back': 'Morago',
+      'Confirm': 'Kgonthiša',
+      'Booking total':
+        'Palomoka ya peeletšo',
 
-    // Confirmation
-    "Booking confirmed!": "Peeletšo e kgonthišitšwe!",
-    "Booking Confirmed": "Peeletšo e kgonthišitšwe",
-    "View my rentals": "Bona dikhiro tša ka",
-    "Back to home": "Boela gae",
-    "Total": "Palomoka",
-    "Pending approval": "E letetše kgonthišetšo",
+      // Payment
+      'Payment': 'Tefo',
+      'Payment method':
+        'Mokgwa wa tefo',
+      'Card payment':
+        'Tefo ka karata',
+      'Card details':
+        'Dintlha tša karata',
+      'Card number':
+        'Nomoro ya karata',
+      'Expiry':
+        'Letšatši la go fela',
+      'CVC': 'CVC',
+      'EFT': 'EFT',
+      'Cash on pickup':
+        'Tšhelete ge o tšea',
+      'Pay now':
+        'Lefa bjale',
 
-    // Rentals
-    "Rental agreement": "Tumelelano ya khiro",
-    "Booking number": "Nomoro ya peeletšo",
-    "Return by": "Bušetša ka",
-    "Total paid": "Palomoka yeo e lefelwago",
-    "Deposit": "Tšhelete ya peeletšo",
-    "Battery information": "Tshedimošo ya betri",
-    "Pickup hub": "Seteišene sa go tšea",
-    "Extend rental": "Oketša nako ya khiro",
-    "Return battery": "Bušetša betri",
+      // Confirmation
+      'Booking confirmed!':
+        'Peeletšo e kgonthišitšwe!',
+      'Booking Confirmed':
+        'Peeletšo e kgonthišitšwe',
+      'View my rentals':
+        'Bona dikhiro tša ka',
+      'Back to home':
+        'Boela gae',
+      'Total': 'Palomoka',
+      'Pending approval':
+        'E letetše kgonthišetšo',
 
-    // Return
-    "Return checklist": "Lenaneo la go hlahloba ge o bušetša",
-    "Charging cable included": "Thapo ya go tjhaja e gona",
-    "Carry case included": "Sekhwama sa go rwala se gona",
-    "Battery is clean and dry": "Betri e hlwekile ebile e omile",
-    "Battery powers on normally": "Betri e a bulega ka tshwanelo",
-    "Condition": "Boemo",
-    "Good condition": "Boemo bjo bobotse",
-    "Minor wear": "Go senyega ganyenyane",
-    "Damaged": "E senyegile",
-    "Submit return": "Romela tshedimošo ya go bušetša",
+      // Rentals
+      'Rental agreement':
+        'Tumelelano ya khiro',
+      'Booking number':
+        'Nomoro ya peeletšo',
+      'Return by':
+        'Bušetša ka',
+      'Total paid':
+        'Palomoka yeo e lefelwago',
+      'Deposit':
+        'Tšhelete ya peeletšo',
+      'Battery information':
+        'Tshedimošo ya betri',
+      'Pickup hub':
+        'Seteišene sa go tšea',
+      'Extend rental':
+        'Oketša nako ya khiro',
+      'Return battery':
+        'Bušetša betri',
 
-    // Login
-    "Welcome back": "Re a go amogela gape",
-    "Log in": "Tsena",
-    "Email": "Imeile",
-    "Password": "Phasewete",
-    "Forgot password?": "O lebetše phasewete?",
-    "Sign up": "Ngwadiša",
-    "Create account": "Hlama akhaonto",
-    "First name": "Leina la mathomo",
-    "Last name": "Sefane",
-    "Phone": "Mogala",
-    "Confirm password": "Kgonthiša phasewete",
+      // Return
+      'Return checklist':
+        'Lenaneo la go hlahloba ge o bušetša',
+      'Charging cable included':
+        'Thapo ya go tjhaja e gona',
+      'Carry case included':
+        'Sekhwama sa go rwala se gona',
+      'Battery is clean and dry':
+        'Betri e hlwekile ebile e omile',
+      'Battery powers on normally':
+        'Betri e a bulega ka tshwanelo',
+      'Condition': 'Boemo',
+      'Good condition':
+        'Boemo bjo bobotse',
+      'Minor wear':
+        'Go senyega ganyenyane',
+      'Damaged':
+        'E senyegile',
+      'Submit return':
+        'Romela tshedimošo ya go bušetša',
 
-    // Profile
-    "Edit profile": "Lokiša profaele",
-    "Rental history": "Histori ya dikhiro",
-    "Total rentals": "Palomoka ya dikhiro",
-    "Outstanding balance": "Tšhelete ye e sa lefelwago",
-    "Personal details": "Dintlha tša botho",
-    "Address": "Aterese",
-    "Member since": "Setho go tloga ka",
-    "Customer support": "Thekgo ya bareki",
+      // Login
+      'Welcome back':
+        'Re a go amogela gape',
+      'Log in':
+        'Tsena',
+      'Email': 'Imeile',
+      'Password': 'Phasewete',
+      'Forgot password?':
+        'O lebetše phasewete?',
+      'Sign up':
+        'Ngwadiša',
+      'Create account':
+        'Hlama akhaonto',
+      'First name':
+        'Leina la mathomo',
+      'Last name':
+        'Sefane',
+      'Phone': 'Mogala',
+      'Confirm password':
+        'Kgonthiša phasewete',
 
-    // Support
-    "Customer Support": "Thekgo ya Bareki",
-    "Chat with us": "Boledišana le rena",
-    "Call us": "Re founele",
-    "Report a problem": "Bega bothata",
-    "Frequently asked questions": "Dipotšišo tšeo di botšišwago gantši",
-    "What went wrong?": "Go senyegile eng?",
-    "Submit report": "Romela pego",
+      // Profile
+      'Edit profile':
+        'Lokiša profaele',
+      'Rental history':
+        'Histori ya dikhiro',
+      'Total rentals':
+        'Palomoka ya dikhiro',
+      'Outstanding balance':
+        'Tšhelete ye e sa lefelwago',
+      'Personal details':
+        'Dintlha tša botho',
+      'Address': 'Aterese',
+      'Member since':
+        'Setho go tloga ka',
+      'Customer support':
+        'Thekgo ya bareki',
 
-    // Notifications
-    "No notifications": "Ga go na ditsebišo",
-    "You are all caught up.": "O bone ditsebišo ka moka.",
+      // Support
+      'Customer Support':
+        'Thekgo ya Bareki',
+      'Chat with us':
+        'Boledišana le rena',
+      'Call us':
+        'Re founele',
+      'Report a problem':
+        'Bega bothata',
+      'Frequently asked questions':
+        'Dipotšišo tšeo di botšišwago gantši',
+      'What went wrong?':
+        'Go senyegile eng?',
+      'Submit report':
+        'Romela pego',
 
-    // Settings
-    "Appearance": "Ponagalo",
-    "Dark mode": "Mokgwa wa leswiswi",
-    "Preferences": "Dipeakanyo",
-    "Language": "Leleme",
-    "English": "Seisimane",
-    "Afrikaans": "SeAfrikaans",
-    "isiXhosa": "isiXhosa",
-    "isiZulu": "isiZulu",
-    "Sepedi": "Sepedi",
-    "Push notifications": "Ditsebišo tša push",
-    "Email updates": "Dintlafatšo tša imeile",
-    "Privacy Policy": "Pholisi ya sephiri",
-    "Terms of Service": "Melao ya tirelo",
+      // Notifications
+      'No notifications':
+        'Ga go na ditsebišo',
+      'You are all caught up.':
+        'O bone ditsebišo ka moka.',
 
-    // General
-    "Save": "Boloka",
-    "Cancel": "Khansela",
-    "Close": "Tswalela",
-    "Delete": "Phumola",
-    "Edit": "Lokiša",
-    "Success": "Katlego",
-    "Error": "Phošo",
-    "Loading...": "E a hlahlela...",
-    "Loading…": "E a hlahlela...",
-    "Price": "Theko",
-    "Date": "Letšatši",
-    "Time": "Nako",
-    "Total": "Palomoka"
-},
+      // Settings
+      'Appearance':
+        'Ponagalo',
+      'Dark mode':
+        'Mokgwa wa leswiswi',
+      'Preferences':
+        'Dipeakanyo',
+      'Language':
+        'Leleme',
+      'English':
+        'Seisimane',
+      'Afrikaans':
+        'SeAfrikaans',
+      'isiXhosa':
+        'isiXhosa',
+      'isiZulu':
+        'isiZulu',
+      'Sepedi':
+        'Sepedi',
+      'Push notifications':
+        'Ditsebišo tša push',
+      'Email updates':
+        'Dintlafatšo tša imeile',
+      'Privacy Policy':
+        'Pholisi ya sephiri',
+      'Terms of Service':
+        'Melao ya tirelo',
 
-    af: {
-      'Home': 'Tuis',
-      'Batteries': 'Batterye',
-      'Rentals': 'Huurtransaksies',
-      'Notifications': 'Kennisgewings',
-      'Profile': 'Profiel',
-      'Settings': 'Instellings',
-      'Good afternoon,': 'Goeiemiddag,',
-      'Search EcoFlow batteries...': 'Soek EcoFlow-batterye...',
-      'Quick actions': 'Vinnige aksies',
-      'Rent now': 'Huur nou',
-      'My rentals': 'My huurtransaksies',
-      'Return': 'Terugbesorg',
-      'Support': 'Ondersteuning',
-      'Featured batteries': 'Voorgestelde batterye',
-      'See all': 'Sien alles',
-      'Promotions': 'Promosies',
-      'Nearby pickup locations': 'Nabygeleë afhaalplekke',
-      'View map': 'Sien kaart',
-      'Search by name or capacity...': 'Soek volgens naam of kapasiteit...',
-      'All': 'Alles',
-      'Compact': 'Kompak',
-      'Portable': 'Draagbaar',
-      'Heavy Duty': 'Swaardiens',
-      'Filter batteries': 'Filtreer batterye',
-      'Pickup location': 'Afhaalplek',
-      'Any hub': 'Enige spilpunt',
-      'Price range': 'Prysklas',
-      'Any price': 'Enige prys',
-      'Under R100/day': 'Onder R100/dag',
-      'R100 – R250/day': 'R100 – R250/dag',
-      'Over R250/day': 'Meer as R250/dag',
-      'Only show available now': 'Wys slegs tans beskikbare',
-      'Apply filters': 'Pas filters toe',
-      'Battery details': 'Batterybesonderhede',
-      'Capacity': 'Kapasiteit',
-      'Runtime': 'Looptyd',
-      'Daily rate': 'Daaglikse tarief',
-      'Status': 'Status',
-      'Book now': 'Bespreek nou',
-      'Booking': 'Bespreking',
-      'Choose a battery': 'Kies ’n battery',
-      'Set rental details': 'Stel huurdetails',
-      'Payment': 'Betaling',
-      'Rental dates': 'Huurdatums',
-      'Pickup date': 'Afhaaldatum',
-      'Return date': 'Terugbesorgingsdatum',
-      'Pickup or delivery': 'Afhaal of aflewering',
-      'Pickup': 'Afhaal',
-      'Delivery': 'Aflewering',
-      'Quantity': 'Hoeveelheid',
-      'Number of batteries': 'Aantal batterye',
-      'Price summary': 'Prysoorsig',
-      'Continue to payment': 'Gaan voort na betaling',
-      'Appearance': 'Voorkoms',
-      'Dark mode': 'Donkermodus',
-      'Preferences': 'Voorkeure',
-      'Language': 'Taal',
-      'Push notifications': 'Stootkennisgewings',
-      'Email updates': 'E-posopdaterings',
-      'Privacy Policy': 'Privaatheidsbeleid',
-      'Terms of Service': 'Diensvoorwaardes',
-      'Available now': 'Nou beskikbaar',
-      'Unavailable': 'Nie beskikbaar nie',
-      'View & book': 'Bekyk en bespreek'
-    },
-
-    xh: {
-      'Home': 'Ikhaya',
-      'Batteries': 'Iibhetri',
-      'Rentals': 'Iirenti',
-      'Notifications': 'Izaziso',
-      'Profile': 'Iprofayile',
-      'Settings': 'Iisetingi',
-      'Good afternoon,': 'Molo emva kwemini,',
-      'Search EcoFlow batteries...': 'Khangela iibhetri ze-EcoFlow...',
-      'Quick actions': 'Izenzo ezikhawulezayo',
-      'Rent now': 'Renta ngoku',
-      'My rentals': 'Iirenti zam',
-      'Return': 'Buyisa',
-      'Support': 'Inkxaso',
-      'Featured batteries': 'Iibhetri ezikhethiweyo',
-      'See all': 'Bona zonke',
-      'Promotions': 'Unyuselo',
-      'Nearby pickup locations': 'Iindawo zokuthatha ezikufuphi',
-      'View map': 'Jonga imephu',
-      'Search by name or capacity...': 'Khangela ngegama okanye umthamo...',
-      'All': 'Zonke',
-      'Compact': 'Encinci',
-      'Portable': 'Ephathwayo',
-      'Heavy Duty': 'Umsebenzi onzima',
-      'Filter batteries': 'Hlunga iibhetri',
-      'Pickup location': 'Indawo yokuthatha',
-      'Any hub': 'Nayiphi na indawo',
-      'Price range': 'Uluhlu lwamaxabiso',
-      'Any price': 'Naliphi na ixabiso',
-      'Under R100/day': 'Ngaphantsi kwe-R100/ngosuku',
-      'Over R250/day': 'Ngaphezulu kwe-R250/ngosuku',
-      'Only show available now': 'Bonisa ezikhoyo ngoku',
-      'Apply filters': 'Sebenzisa izihluzi',
-      'Battery details': 'Iinkcukacha zebhetri',
-      'Capacity': 'Umthamo',
-      'Runtime': 'Ixesha lokusebenza',
-      'Daily rate': 'Ixabiso losuku',
-      'Status': 'Imeko',
-      'Book now': 'Bhukisha ngoku',
-      'Booking': 'Ukubhukisha',
-      'Choose a battery': 'Khetha ibhetri',
-      'Set rental details': 'Seta iinkcukacha zerenti',
-      'Payment': 'Intlawulo',
-      'Rental dates': 'Imihla yerenti',
-      'Pickup date': 'Umhla wokuthatha',
-      'Return date': 'Umhla wokubuyisa',
-      'Pickup or delivery': 'Ukuthatha okanye ukuhanjiswa',
-      'Pickup': 'Thatha',
-      'Delivery': 'Ukuhanjiswa',
-      'Quantity': 'Ubuninzi',
-      'Number of batteries': 'Inani leebhetri',
-      'Price summary': 'Isishwankathelo sexabiso',
-      'Continue to payment': 'Qhubeka uye kwintlawulo',
-      'Appearance': 'Imbonakalo',
-      'Dark mode': 'Imo emnyama',
-      'Preferences': 'Izinto ozikhethayo',
-      'Language': 'Ulwimi',
-      'Push notifications': 'Izaziso',
-      'Email updates': 'Uhlaziyo lwe-imeyile',
-      'Privacy Policy': 'Umgaqo-nkqubo wabucala',
-      'Terms of Service': 'Imigaqo yenkonzo',
-      'Available now': 'Iyafumaneka ngoku',
-      'Unavailable': 'Ayifumaneki',
-      'View & book': 'Jonga uze ubhukishe'
-    },
-
-    zu: {
-      'Home': 'Ikhaya',
-      'Batteries': 'Amabhethri',
-      'Rentals': 'Ukuqasha',
-      'Notifications': 'Izaziso',
-      'Profile': 'Iphrofayela',
-      'Settings': 'Izilungiselelo',
-      'Good afternoon,': 'Sawubona ntambama,',
-      'Search EcoFlow batteries...': 'Sesha amabhethri e-EcoFlow...',
-      'Quick actions': 'Izenzo ezisheshayo',
-      'Rent now': 'Qasha manje',
-      'My rentals': 'Ukuqasha kwami',
-      'Return': 'Buyisa',
-      'Support': 'Usizo',
-      'Featured batteries': 'Amabhethri akhethiwe',
-      'See all': 'Bona konke',
-      'Promotions': 'Amaphromoshini',
-      'Nearby pickup locations': 'Izindawo zokuthatha eziseduze',
-      'View map': 'Buka imephu',
-      'Search by name or capacity...': 'Sesha ngegama noma ngomthamo...',
-      'All': 'Konke',
-      'Compact': 'Amancane',
-      'Portable': 'Athwalekayo',
-      'Heavy Duty': 'Umsebenzi osindayo',
-      'Filter batteries': 'Hlunga amabhethri',
-      'Pickup location': 'Indawo yokuthatha',
-      'Any hub': 'Noma iyiphi indawo',
-      'Price range': 'Ibanga lentengo',
-      'Any price': 'Noma iyiphi intengo',
-      'Under R100/day': 'Ngaphansi kuka-R100/ngosuku',
-      'Over R250/day': 'Ngaphezu kuka-R250/ngosuku',
-      'Only show available now': 'Bonisa atholakalayo manje',
-      'Apply filters': 'Sebenzisa izihlungi',
-      'Battery details': 'Imininingwane yebhethri',
-      'Capacity': 'Umthamo',
-      'Runtime': 'Isikhathi sokusebenza',
-      'Daily rate': 'Intengo yosuku',
-      'Status': 'Isimo',
-      'Book now': 'Qasha manje',
-      'Booking': 'Ukubhukha',
-      'Choose a battery': 'Khetha ibhethri',
-      'Set rental details': 'Setha imininingwane yokuqasha',
-      'Payment': 'Inkokhelo',
-      'Rental dates': 'Izinsuku zokuqasha',
-      'Pickup date': 'Usuku lokuthatha',
-      'Return date': 'Usuku lokubuyisa',
-      'Pickup or delivery': 'Ukuthatha noma ukulethwa',
-      'Pickup': 'Ukuthatha',
-      'Delivery': 'Ukulethwa',
-      'Quantity': 'Inani',
-      'Number of batteries': 'Inani lamabhethri',
-      'Price summary': 'Isifinyezo sentengo',
-      'Continue to payment': 'Qhubekela ekukhokheni',
-      'Appearance': 'Ukubukeka',
-      'Dark mode': 'Imodi emnyama',
-      'Preferences': 'Okuncanyelwayo',
-      'Language': 'Ulimi',
-      'Push notifications': 'Izaziso',
-      'Email updates': 'Izibuyekezo ze-imeyili',
-      'Privacy Policy': 'Inqubomgomo yobumfihlo',
-      'Terms of Service': 'Imigomo yesevisi',
-      'Available now': 'Iyatholakala manje',
-      'Unavailable': 'Ayitholakali',
-      'View & book': 'Buka bese ubhukha'
+      // General
+      'Save': 'Boloka',
+      'Cancel': 'Khansela',
+      'Close': 'Tswalela',
+      'Delete': 'Phumola',
+      'Edit': 'Lokiša',
+      'Success': 'Katlego',
+      'Error': 'Phošo',
+      'Loading...':
+        'E a hlahlela...',
+      'Loading…':
+        'E a hlahlela...',
+      'Price': 'Theko',
+      'Date': 'Letšatši',
+      'Time': 'Nako',
+      'Total': 'Palomoka'
     }
   };
 
-  function languageCode() {
-    try {
-      return localStorage.getItem(LANGUAGE_KEY) || 'en';
-    } catch (e) {
-      return 'en';
-    }
-  }
 
-  function translateTextNodes(root) {
-    if (isAdminPage()) return;
+  function translatePage(language) {
 
-    const lang = languageCode();
-
-    if (lang === 'en') return;
-
-    const dict = translations[lang];
-
-    if (!dict) return;
-
-    const walker = document.createTreeWalker(
-      root || document.body,
-      NodeFilter.SHOW_TEXT
-    );
-
-    const nodes = [];
-
-    while (walker.nextNode()) {
-      nodes.push(walker.currentNode);
+    if (isAdminPage()) {
+      return;
     }
 
-    nodes.forEach(node => {
-      if (!node.nodeValue.trim()) return;
+    const dictionary =
+      TRANSLATIONS[language];
 
-      const key = node.nodeValue.trim();
+    if (!dictionary) {
+      return;
+    }
 
-      if (dict[key]) {
-        node.nodeValue = node.nodeValue.replace(
-          key,
-          dict[key]
-        );
-      }
-    });
-
-    document
-      .querySelectorAll('input[placeholder], textarea[placeholder]')
-      .forEach(el => {
-        const key = el.getAttribute('placeholder').trim();
-
-        if (dict[key]) {
-          el.setAttribute(
-            'placeholder',
-            dict[key]
-          );
-        }
-      });
-  }
-
-  function setLanguage(lang) {
-    try {
-      localStorage.setItem(
-        LANGUAGE_KEY,
-        lang
-      );
-    } catch (e) {}
-
-    document.documentElement.lang =
-      lang === 'xh'
-        ? 'xh'
-        : lang === 'zu'
-          ? 'zu'
-          : lang === 'af'
-            ? 'af'
-            : 'en';
-
-    // Reload so every page rebuilds its dynamic content
-    // using the selected language.
-    window.location.reload();
-  }
-
-  document.addEventListener('DOMContentLoaded', () => {
-
-    const currentPage =
-      window.location.pathname.split('/').pop() ||
-      'index.html';
-
-    /* Active state for navigation */
     document
       .querySelectorAll(
-        '.bottom-nav a, .admin-sidebar nav a'
+        '[data-i18n]'
       )
-      .forEach(link => {
+      .forEach(element => {
 
-        const href =
-          link.getAttribute('href');
+        const key =
+          element.dataset.i18n;
 
-        if (href === currentPage) {
-          link.classList.add('active');
+        if (dictionary[key]) {
+          element.textContent =
+            dictionary[key];
         }
       });
 
-    /* Theme */
-    if (!isAdminPage()) {
+    document
+      .querySelectorAll(
+        '[data-i18n-placeholder]'
+      )
+      .forEach(element => {
 
-      const savedTheme = (() => {
-        try {
-          return localStorage.getItem(THEME_KEY) || 'light';
-        } catch (e) {
-          return 'light';
+        const key =
+          element.dataset.i18nPlaceholder;
+
+        if (dictionary[key]) {
+          element.placeholder =
+            dictionary[key];
         }
-      })();
+      });
 
-      applyTheme(savedTheme);
+    document
+      .querySelectorAll(
+        '[data-i18n-title]'
+      )
+      .forEach(element => {
 
-      const toggle =
-        document.getElementById(
-          'dark-mode-toggle'
-        );
+        const key =
+          element.dataset.i18nTitle;
 
-      if (toggle) {
+        if (dictionary[key]) {
+          element.title =
+            dictionary[key];
+        }
+      });
+  }
 
-        toggle.checked =
-          savedTheme === 'dark';
 
-        toggle.addEventListener(
-          'change',
-          () => {
+  function initLanguage() {
 
-            const theme =
-              toggle.checked
-                ? 'dark'
-                : 'light';
+    if (isAdminPage()) {
+      return;
+    }
 
-            try {
-              localStorage.setItem(
-                THEME_KEY,
-                theme
-              );
-            } catch (e) {}
+    const selector =
+      document.querySelector(
+        '#language-select'
+      );
 
-            applyTheme(theme);
+    const savedLanguage =
+      localStorage.getItem(
+        LANGUAGE_KEY
+      ) || 'en';
 
-            if (
-              typeof PowerShare !== 'undefined' &&
-              PowerShare.toast
-            ) {
-              PowerShare.toast(
-                theme === 'dark'
-                  ? 'Dark mode enabled'
-                  : 'Dark mode disabled'
-              );
-            }
+    if (selector) {
+
+      selector.value =
+        savedLanguage;
+
+      selector.addEventListener(
+        'change',
+        function () {
+
+          const language =
+            this.value;
+
+          localStorage.setItem(
+            LANGUAGE_KEY,
+            language
+          );
+
+          if (language === 'en') {
+
+            window.location.reload();
+
+            return;
           }
-        );
-      }
 
-      /* Language */
-      const languageSelect =
-        document.getElementById(
-          'language-select'
-        );
+          translatePage(language);
+        }
+      );
+    }
 
-      if (languageSelect) {
+    if (savedLanguage !== 'en') {
+      translatePage(savedLanguage);
+    }
+  }
 
-        const savedLanguage =
-          languageCode();
 
-        languageSelect.value =
-          savedLanguage;
+  // ============================================================
+  // SHEETS / MODALS
+  // ============================================================
 
-        languageSelect.addEventListener(
-          'change',
-          () => {
-            setLanguage(
-              languageSelect.value
+  function initSheets() {
+
+    document.addEventListener(
+      'click',
+      function (event) {
+
+        const openButton =
+          event.target.closest(
+            '[data-sheet-open]'
+          );
+
+        if (openButton) {
+
+          const target =
+            document.querySelector(
+              openButton.dataset.sheetOpen
+            );
+
+          if (target) {
+
+            target.classList.add(
+              'open'
+            );
+
+            document.body.classList.add(
+              'sheet-open'
             );
           }
-        );
-      }
 
-      translateTextNodes(
-        document.body
-      );
-
-      const translationObserver =
-        new MutationObserver(() => {
-          translateTextNodes(
-            document.body
-          );
-        });
-
-      translationObserver.observe(
-        document.body,
-        {
-          childList: true,
-          subtree: true
+          return;
         }
-      );
-    }
 
-    /* Back button */
-    document
-      .querySelectorAll('.back-btn')
-      .forEach(btn => {
 
-        btn.addEventListener(
-          'click',
-          (e) => {
+        const closeButton =
+          event.target.closest(
+            '[data-sheet-close]'
+          );
 
-            const explicitHref =
-              btn.getAttribute(
-                'data-href'
-              );
+        if (closeButton) {
 
-            if (explicitHref) {
-              window.location.href =
-                explicitHref;
-              return;
-            }
+          const sheet =
+            closeButton.closest(
+              '.sheet, .modal, [data-sheet]'
+            );
 
-            e.preventDefault();
+          if (sheet) {
 
-            if (window.history.length > 1) {
-              window.history.back();
-            } else {
-              window.location.href =
-                'home.html';
-            }
+            sheet.classList.remove(
+              'open'
+            );
+
+            document.body.classList.remove(
+              'sheet-open'
+            );
           }
-        );
-      });
 
-    /* Tab rows */
-    document
-      .querySelectorAll('.tab-row')
-      .forEach(tabRow => {
+          return;
+        }
 
-        const buttons =
-          tabRow.querySelectorAll(
-            'button'
+
+        if (
+          event.target.classList.contains(
+            'sheet-overlay'
+          )
+        ) {
+
+          const sheet =
+            event.target.closest(
+              '.sheet'
+            );
+
+          if (sheet) {
+
+            sheet.classList.remove(
+              'open'
+            );
+
+            document.body.classList.remove(
+              'sheet-open'
+            );
+          }
+        }
+      }
+    );
+  }
+
+
+  // ============================================================
+  // TABS
+  // ============================================================
+
+  function initTabs() {
+
+    document.addEventListener(
+      'click',
+      function (event) {
+
+        const tab =
+          event.target.closest(
+            '[data-tab]'
           );
 
-        const panelGroup =
-          tabRow.getAttribute(
-            'data-panels'
+        if (!tab) {
+          return;
+        }
+
+        const group =
+          tab.closest(
+            '[data-tabs]'
           );
 
-        buttons.forEach(btn => {
+        if (!group) {
+          return;
+        }
 
-          btn.addEventListener(
-            'click',
-            () => {
+        const target =
+          tab.dataset.tab;
 
-              buttons.forEach(
-                b =>
-                  b.classList.remove(
-                    'active'
-                  )
-              );
-
-              btn.classList.add(
+        group
+          .querySelectorAll(
+            '[data-tab]'
+          )
+          .forEach(
+            item =>
+              item.classList.remove(
                 'active'
-              );
-
-              if (panelGroup) {
-
-                const target =
-                  btn.getAttribute(
-                    'data-target'
-                  );
-
-                document
-                  .querySelectorAll(
-                    `[data-panel-group="${panelGroup}"]`
-                  )
-                  .forEach(panel => {
-
-                    panel.style.display =
-                      panel.getAttribute(
-                        'data-panel'
-                      ) === target
-                        ? ''
-                        : 'none';
-                  });
-              }
-            }
+              )
           );
-        });
-      });
 
-    /* Filter chips */
-    document
-      .querySelectorAll(
-        '.chip-row[data-exclusive]'
-      )
-      .forEach(row => {
-
-        row.querySelectorAll(
-          '.chip'
-        ).forEach(chip => {
-
-          chip.addEventListener(
-            'click',
-            () => {
-
-              row
-                .querySelectorAll(
-                  '.chip'
-                )
-                .forEach(c =>
-                  c.classList.remove(
-                    'active'
-                  )
-                );
-
-              chip.classList.add(
+        group
+          .querySelectorAll(
+            '[data-tab-panel]'
+          )
+          .forEach(
+            panel =>
+              panel.classList.remove(
                 'active'
-              );
-            }
-          );
-        });
-      });
-
-    /* Bottom sheets / overlays */
-    document
-      .querySelectorAll(
-        '[data-open-sheet]'
-      )
-      .forEach(trigger => {
-
-        trigger.addEventListener(
-          'click',
-          () => {
-
-            const sheet =
-              document.getElementById(
-                trigger.getAttribute(
-                  'data-open-sheet'
-                )
-              );
-
-            if (sheet) {
-              sheet.classList.add(
-                'open'
-              );
-            }
-          }
-        );
-      });
-
-    document
-      .querySelectorAll('.overlay')
-      .forEach(overlay => {
-
-        overlay.addEventListener(
-          'click',
-          (e) => {
-
-            if (
-              e.target === overlay ||
-              e.target.closest(
-                '[data-close-sheet]'
               )
-            ) {
-              overlay.classList.remove(
-                'open'
-              );
-            }
-          }
-        );
-      });
-
-    /* Password visibility */
-    document
-      .querySelectorAll(
-        '.toggle-visibility'
-      )
-      .forEach(btn => {
-
-        btn.addEventListener(
-          'click',
-          () => {
-
-            const input =
-              btn
-                .closest('.input-wrap')
-                .querySelector(
-                  'input'
-                );
-
-            const isPassword =
-              input.type === 'password';
-
-            input.type =
-              isPassword
-                ? 'text'
-                : 'password';
-
-            btn
-              .querySelector(
-                '.material-icons-outlined'
-              )
-              .textContent =
-                isPassword
-                  ? 'visibility_off'
-                  : 'visibility';
-          }
-        );
-      });
-
-    /* Stepper */
-    document
-      .querySelectorAll('.stepper')
-      .forEach(stepper => {
-
-        const valueEl =
-          stepper.querySelector(
-            '.qty-value'
           );
+
+        tab.classList.add(
+          'active'
+        );
+
+        const panel =
+          group.querySelector(
+            `[data-tab-panel="${target}"]`
+          );
+
+        if (panel) {
+          panel.classList.add(
+            'active'
+          );
+        }
+      }
+    );
+  }
+
+
+  // ============================================================
+  // PASSWORD VISIBILITY
+  // ============================================================
+
+  function initPasswordToggles() {
+
+    document.addEventListener(
+      'click',
+      function (event) {
+
+        const button =
+          event.target.closest(
+            '[data-password-toggle]'
+          );
+
+        if (!button) {
+          return;
+        }
+
+        const targetId =
+          button.dataset.passwordToggle;
+
+        const input =
+          document.getElementById(
+            targetId
+          );
+
+        if (!input) {
+          return;
+        }
+
+        if (input.type === 'password') {
+
+          input.type = 'text';
+
+          button.textContent =
+            'visibility_off';
+
+        } else {
+
+          input.type = 'password';
+
+          button.textContent =
+            'visibility';
+        }
+      }
+    );
+  }
+
+
+  // ============================================================
+  // STEPPERS
+  // ============================================================
+
+  function initSteppers() {
+
+    document.addEventListener(
+      'click',
+      function (event) {
+
+        const button =
+          event.target.closest(
+            '[data-stepper]'
+          );
+
+        if (!button) {
+          return;
+        }
+
+        const target =
+          document.querySelector(
+            button.dataset.stepper
+          );
+
+        if (!target) {
+          return;
+        }
+
+        let value =
+          parseInt(
+            target.value,
+            10
+          ) || 0;
 
         const min =
           parseInt(
-            stepper.getAttribute(
-              'data-min'
-            ) || '1',
+            target.min,
             10
           );
 
         const max =
           parseInt(
-            stepper.getAttribute(
-              'data-max'
-            ) || '9',
+            target.max,
             10
           );
 
-        let value =
-          parseInt(
-            valueEl.textContent,
-            10
-          );
+        if (
+          button.dataset.stepperAction ===
+          'increase'
+        ) {
 
-        stepper
-          .querySelectorAll('button')
-          .forEach(btn => {
+          value++;
 
-            btn.addEventListener(
-              'click',
-              () => {
+        } else if (
+          button.dataset.stepperAction ===
+          'decrease'
+        ) {
 
-                const dir =
-                  btn.getAttribute(
-                    'data-step'
-                  ) === 'inc'
-                    ? 1
-                    : -1;
+          value--;
+        }
 
-                value =
-                  Math.max(
-                    min,
-                    Math.min(
-                      max,
-                      value + dir
-                    )
-                  );
-
-                valueEl.textContent =
-                  value;
-
-                stepper.dispatchEvent(
-                  new CustomEvent(
-                    'stepchange',
-                    {
-                      detail: {
-                        value
-                      }
-                    }
-                  )
-                );
-              }
+        if (!Number.isNaN(min)) {
+          value =
+            Math.max(
+              value,
+              min
             );
-          });
-      });
+        }
 
-    /* Payment method selection */
-    document
-      .querySelectorAll('.pay-method')
-      .forEach(method => {
-
-        method.addEventListener(
-          'click',
-          () => {
-
-            const group =
-              method.closest(
-                '[data-pay-group]'
-              );
-
-            if (group) {
-              group
-                .querySelectorAll(
-                  '.pay-method'
-                )
-                .forEach(
-                  m =>
-                    m.classList.remove(
-                      'selected'
-                    )
-                );
-            }
-
-            method.classList.add(
-              'selected'
+        if (!Number.isNaN(max)) {
+          value =
+            Math.min(
+              value,
+              max
             );
+        }
 
-            const radio =
-              method.querySelector(
-                'input[type="radio"]'
-              );
+        target.value =
+          value;
 
-            if (radio) {
-              radio.checked = true;
+        target.dispatchEvent(
+          new Event(
+            'change',
+            {
+              bubbles: true
             }
-          }
+          )
         );
-      });
+      }
+    );
+  }
 
-    /* Notification badge */
+
+  // ============================================================
+  // FILTERS
+  // ============================================================
+
+  function initFilters() {
+
+    document.addEventListener(
+      'change',
+      function (event) {
+
+        const filter =
+          event.target.closest(
+            '[data-filter]'
+          );
+
+        if (!filter) {
+          return;
+        }
+
+        const filterName =
+          filter.dataset.filter;
+
+        const value =
+          filter.value;
+
+        document
+          .querySelectorAll(
+            `[data-filter-value="${filterName}"]`
+          )
+          .forEach(item => {
+
+            if (
+              !value ||
+              value === 'all'
+            ) {
+
+              item.style.display =
+                '';
+
+              return;
+            }
+
+            const itemValue =
+              item.dataset[
+                filterName
+              ];
+
+            item.style.display =
+              itemValue === value
+                ? ''
+                : 'none';
+          });
+      }
+    );
+  }
+
+
+  // ============================================================
+  // PAYMENT METHOD SELECTION
+  // ============================================================
+
+  function initPaymentMethods() {
+
+    document.addEventListener(
+      'click',
+      function (event) {
+
+        const method =
+          event.target.closest(
+            '.pay-method'
+          );
+
+        if (!method) {
+          return;
+        }
+
+        const group =
+          method.closest(
+            '[data-pay-group]'
+          );
+
+        if (group) {
+
+          group
+            .querySelectorAll(
+              '.pay-method'
+            )
+            .forEach(
+              item =>
+                item.classList.remove(
+                  'selected'
+                )
+            );
+        }
+
+        method.classList.add(
+          'selected'
+        );
+
+        const radio =
+          method.querySelector(
+            'input[type="radio"]'
+          );
+
+        if (radio) {
+          radio.checked = true;
+        }
+      }
+    );
+  }
+
+
+  // ============================================================
+  // NOTIFICATION BADGE
+  // ============================================================
+
+  function updateNotificationBadge() {
+
     if (
-      typeof PowerShare !== 'undefined'
+      typeof PowerShare ===
+      'undefined'
     ) {
-
-      const unread =
-        PowerShare.NOTIFICATIONS
-          .filter(
-            n => !n.read
-          ).length;
-
-      document
-        .querySelectorAll(
-          '[data-unread-count]'
-        )
-        .forEach(el => {
-
-          if (unread > 0) {
-            el.textContent =
-              unread;
-
-            el.style.display = '';
-          } else {
-            el.style.display =
-              'none';
-          }
-        });
+      return;
     }
-  });
+
+    const unread =
+      PowerShare.NOTIFICATIONS
+        .filter(
+          notification =>
+            !notification.read
+        )
+        .length;
+
+    document
+      .querySelectorAll(
+        '[data-unread-count]'
+      )
+      .forEach(element => {
+
+        if (unread > 0) {
+
+          element.textContent =
+            unread;
+
+          element.style.display =
+            '';
+
+        } else {
+
+          element.style.display =
+            'none';
+        }
+      });
+  }
+
+
+  // ============================================================
+  // INITIALISE
+  // ============================================================
+
+  document.addEventListener(
+    'DOMContentLoaded',
+    function () {
+
+      initTheme();
+      initLanguage();
+      initSheets();
+      initTabs();
+      initPasswordToggles();
+      initSteppers();
+      initFilters();
+      initPaymentMethods();
+      updateNotificationBadge();
+
+    }
+  );
+
 })();
