@@ -508,114 +508,167 @@
   // ============================================================
   // SHEETS / MODALS
   // ============================================================
+/* ---------- Bottom sheets / overlays ----------
+   Supports both:
+   [data-open-sheet="id"]
+   [data-sheet-open="id"]
 
-  function initSheets() {
+   And both:
+   [data-close-sheet]
+   [data-sheet-close]
+------------------------------------------------ */
 
-    document.addEventListener('click', function (event) {
+function initSheets() {
 
-      /*
-       * Supports BOTH:
-       * data-sheet-open="#forgot-sheet"
-       * data-open-sheet="forgot-sheet"
-       */
-      const openButton = event.target.closest(
-        '[data-sheet-open], [data-open-sheet]'
-      );
+  /* ================================
+     OPEN SHEETS
+  ================================= */
 
-      if (openButton) {
+  document
+    .querySelectorAll(
+      '[data-open-sheet], [data-sheet-open]'
+    )
+    .forEach(trigger => {
 
-        event.preventDefault();
+      trigger.addEventListener(
+        'click',
+        function (event) {
 
-        let selector =
-          openButton.dataset.sheetOpen ||
-          openButton.dataset.openSheet;
+          event.preventDefault();
 
-        if (!selector) {
-          return;
-        }
+          const sheetId =
+            this.getAttribute('data-open-sheet') ||
+            this.getAttribute('data-sheet-open');
 
-        /*
-         * Older markup may contain:
-         * data-open-sheet="forgot-sheet"
-         *
-         * Convert it into an ID selector.
-         */
-        if (
-          !selector.startsWith('#') &&
-          !selector.startsWith('.') &&
-          !selector.startsWith('[')
-        ) {
-          selector = '#' + selector;
-        }
+          if (!sheetId) {
+            return;
+          }
 
-        const target =
-          document.querySelector(selector);
+          const sheet =
+            document.getElementById(sheetId);
 
-        if (target) {
+          if (!sheet) {
+            console.warn(
+              `PowerShare: sheet "${sheetId}" not found.`
+            );
 
-          target.classList.add('open');
+            return;
+          }
 
-          document.body.classList.add(
-            'sheet-open'
+          sheet.classList.add('open');
+
+          sheet.setAttribute(
+            'aria-hidden',
+            'false'
           );
 
-          return;
         }
-      }
-
-
-      /*
-       * Close buttons
-       */
-      const closeButton = event.target.closest(
-        '[data-sheet-close], [data-close-sheet]'
       );
 
-      if (closeButton) {
+    });
 
-        event.preventDefault();
 
-        const sheet = closeButton.closest(
-          '.sheet, .modal, [data-sheet]'
-        );
+  /* ================================
+     CLOSE BUTTONS
+  ================================= */
 
-        if (sheet) {
+  document
+    .querySelectorAll(
+      '[data-close-sheet], [data-sheet-close]'
+    )
+    .forEach(button => {
 
-          sheet.classList.remove('open');
+      button.addEventListener(
+        'click',
+        function (event) {
 
-          document.body.classList.remove(
-            'sheet-open'
-          );
+          event.preventDefault();
+          event.stopPropagation();
+
+          const overlay =
+            this.closest('.overlay');
+
+          if (overlay) {
+
+            overlay.classList.remove('open');
+
+            overlay.setAttribute(
+              'aria-hidden',
+              'true'
+            );
+
+          }
+
         }
+      );
 
+    });
+
+
+  /* ================================
+     CLICK OUTSIDE SHEET
+  ================================= */
+
+  document
+    .querySelectorAll('.overlay')
+    .forEach(overlay => {
+
+      overlay.addEventListener(
+        'click',
+        function (event) {
+
+          if (event.target === overlay) {
+
+            overlay.classList.remove(
+              'open'
+            );
+
+            overlay.setAttribute(
+              'aria-hidden',
+              'true'
+            );
+
+          }
+
+        }
+      );
+
+    });
+
+
+  /* ================================
+     ESCAPE KEY
+  ================================= */
+
+  document.addEventListener(
+    'keydown',
+    function (event) {
+
+      if (event.key !== 'Escape') {
         return;
       }
 
-
-      /*
-       * Clicking the sheet overlay closes it.
-       */
-      if (
-        event.target.classList.contains(
-          'sheet-overlay'
+      document
+        .querySelectorAll(
+          '.overlay.open'
         )
-      ) {
+        .forEach(overlay => {
 
-        const sheet =
-          event.target.closest('.sheet');
-
-        if (sheet) {
-
-          sheet.classList.remove('open');
-
-          document.body.classList.remove(
-            'sheet-open'
+          overlay.classList.remove(
+            'open'
           );
-        }
-      }
 
-    });
-  }
+          overlay.setAttribute(
+            'aria-hidden',
+            'true'
+          );
+
+        });
+
+    }
+  );
+
+}
 
 
   // ============================================================
