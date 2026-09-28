@@ -171,7 +171,7 @@
               qty: booking.quantity, start: booking.startDate, end: booking.endDate,
               total: Number(booking.totalPrice || 0)
             });
-            window.location.href = 'payment.html';
+            window.location.href = `payment.html?bookingId=${booking.id}`;
           } catch (err) {
             PowerShare.toast(err.message || 'Could not create booking', 'error');
             btn.style.pointerEvents = '';

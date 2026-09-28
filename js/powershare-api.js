@@ -509,6 +509,23 @@ const PowerShareAPI = (() => {
         ),
 
 
+      /*
+       * Lists rentals for the admin side (optionally filtered by
+       * status). The customer-facing getMyRentals() only ever
+       * returns the current user's own rentals, so this is the
+       * only way for the admin UI to discover a rental's id and
+       * act on it (collect / process a return).
+       */
+      listRentals: (
+        status
+      ) =>
+        request(
+          `/admin/rentals${
+            status ? `?status=${status}` : ''
+          }`
+        ),
+
+
       processReturn: (payload) =>
         request(
           '/returns',

@@ -14,6 +14,7 @@
   
 </head>
 <body class="">
+  <script src="js/powershare-api.js"></script>
   <script src="js/main.js"></script>
   <script src="js/navigation.js"></script>
   <script src="js/animations.js"></script>
@@ -34,54 +35,109 @@
       <div class="screen-content" id="rental-root"></div>
 
       <script>
+        function fmtDate(d) {
+          if (!d) return '—';
+          return new Date(d).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+
+        function bucketFor(r) {
+          if (r.status === 'RETURNED' || r.status === 'COMPLETED') return 'completed';
+          if (r.status === 'OVERDUE') return 'overdue';
+          if (r.status === 'ACTIVE') return r.collectedAt ? 'active' : 'upcoming';
+          return 'active';
+        }
+
         const params = new URLSearchParams(window.location.search);
-        const rental = PowerShare.RENTALS.find(r => r.id === params.get('id')) || PowerShare.RENTALS[0];
-        const battery = PowerShare.findBattery(rental.batteryId);
+        const rentalId = params.get('id');
         const root = document.getElementById('rental-root');
-        const badgeMap = { active: 'badge-active', upcoming: 'badge-pending', completed: 'badge-completed' };
-        const labelMap = { active: 'Active', upcoming: 'Upcoming', completed: 'Completed' };
+        const badgeMap = { active: 'badge-active', upcoming: 'badge-pending', completed: 'badge-completed', overdue: 'badge-unavailable' };
+        const labelMap = { active: 'Active', upcoming: 'Upcoming', completed: 'Completed', overdue: 'Overdue' };
 
-        root.innerHTML = `
-          <div class="card" style="text-align:center">
-            <div class="charge-ring" style="--charge-pct:${rental.chargeAtPickup}%;margin:0 auto">
-              <span class="charge-value">${rental.chargeAtPickup}%</span>
-              <span class="charge-label">at pickup</span>
-            </div>
-            <h3 style="margin-top:14px">${battery.name}</h3>
-            <span class="badge ${badgeMap[rental.status]}" style="margin-top:6px">${labelMap[rental.status]}</span>
-          </div>
+        if (!rentalId) {
+          root.innerHTML = `<p class="text-muted" style="padding:12px 4px">No rental was specified.</p>`;
+        } else {
+          root.innerHTML = `<p class="text-muted" style="padding:12px 4px">Loading…</p>`;
 
-          <div class="section" style="margin-top:20px">
-            <h3>Rental agreement</h3>
-            <div class="card stack-2" style="margin-top:12px">
-              <div class="row-between"><span class="text-muted">Booking number</span><strong>${rental.id}</strong></div>
-              <div class="row-between"><span class="text-muted">Pickup date</span><strong>${rental.start}</strong></div>
-              <div class="row-between"><span class="text-muted">Return by</span><strong>${rental.end}</strong></div>
-              <div class="row-between"><span class="text-muted">Total paid</span><strong>R${rental.total}</strong></div>
-              <div class="row-between"><span class="text-muted">Deposit</span><strong>R${battery.deposit} (refundable)</strong></div>
-            </div>
-          </div>
+          PowerShareAPI.getMyProfile()
+            .catch(() => { window.location.href = 'login.html'; });
 
-          <div class="section">
-            <h3>Battery information</h3>
-            <div class="card stack-2" style="margin-top:12px">
-              <div class="row-between"><span class="text-muted">Capacity</span><strong>${battery.capacity}</strong></div>
-              <div class="row-between"><span class="text-muted">Outputs</span><strong>${battery.outputs}</strong></div>
-              <div class="row-between"><span class="text-muted">Pickup hub</span><strong>${battery.location}</strong></div>
-            </div>
-          </div>
-        `;
+          PowerShareAPI.getRental(rentalId)
+            .then((rental) => Promise.all([
+              rental,
+              PowerShareAPI.getBooking(rental.bookingId).catch(() => null),
+              PowerShareAPI.getBattery(rental.batteryId).catch(() => null)
+            ]))
+            .then(([rental, booking, battery]) => {
+              const bucket = bucketFor(rental);
 
-        if (rental.status !== 'completed') {
-          const actions = document.createElement('div');
-          actions.className = 'stack-3';
-          actions.style.marginTop = '24px';
-          actions.innerHTML = `
-            <button class="btn btn-outline" id="extend-btn">Extend rental</button>
-            ${rental.status === 'active' ? `<a href="return-battery.html?id=${rental.id}" class="btn btn-primary">Return battery</a>` : ''}
-          `;
-          root.appendChild(actions);
-          document.getElementById('extend-btn').addEventListener('click', () => PowerShare.toast('Extension request sent to support', 'success'));
+              root.innerHTML = `
+                <div class="card" style="text-align:center">
+                  <div class="rental-thumb" style="margin:0 auto;width:64px;height:64px">
+                    <span class="material-icons-outlined" style="font-size:32px">battery_full</span>
+                  </div>
+                  <h3 style="margin-top:14px">${rental.batteryName}</h3>
+                  <span class="badge ${badgeMap[bucket]}" style="margin-top:6px">${labelMap[bucket]}</span>
+                </div>
+
+                <div class="section" style="margin-top:20px">
+                  <h3>Rental agreement</h3>
+                  <div class="card stack-2" style="margin-top:12px">
+                    <div class="row-between"><span class="text-muted">Booking number</span><strong>${rental.id}</strong></div>
+                    <div class="row-between"><span class="text-muted">Pickup date</span><strong>${booking ? fmtDate(booking.startDate) : '—'}</strong></div>
+                    <div class="row-between"><span class="text-muted">Return by</span><strong>${fmtDate(rental.dueDate)}</strong></div>
+                    <div class="row-between"><span class="text-muted">Total paid</span><strong>${booking ? `R${booking.totalPrice}` : '—'}</strong></div>
+                    <div class="row-between"><span class="text-muted">Deposit</span><strong>${battery ? `R${battery.depositAmount} (refundable)` : '—'}</strong></div>
+                  </div>
+                </div>
+
+                <div class="section">
+                  <h3>Battery information</h3>
+                  <div class="card stack-2" style="margin-top:12px">
+                    <div class="row-between"><span class="text-muted">Capacity</span><strong>${battery ? `${battery.capacityWh} Wh` : '—'}</strong></div>
+                    <div class="row-between"><span class="text-muted">Condition</span><strong>${battery ? battery.condition : '—'}</strong></div>
+                    <div class="row-between"><span class="text-muted">Collected</span><strong>${rental.collectedAt ? fmtDate(rental.collectedAt) : 'Not yet collected'}</strong></div>
+                  </div>
+                </div>
+              `;
+
+              if (bucket !== 'completed') {
+                const actions = document.createElement('div');
+                actions.className = 'stack-3';
+                actions.style.marginTop = '24px';
+                actions.innerHTML = `
+                  <button class="btn btn-outline" id="extend-btn">Extend rental</button>
+                  ${bucket === 'active' || bucket === 'overdue' ? `<a href="return-battery.html?id=${rental.id}" class="btn btn-primary">Return battery</a>` : ''}
+                `;
+                root.appendChild(actions);
+
+                document.getElementById('extend-btn').addEventListener('click', function () {
+                  const suggested = new Date(rental.dueDate);
+                  suggested.setDate(suggested.getDate() + 7);
+                  const newDueDate = window.prompt(
+                    'New return date (YYYY-MM-DD):',
+                    suggested.toISOString().slice(0, 10)
+                  );
+                  if (!newDueDate) return;
+
+                  this.disabled = true;
+                  this.textContent = 'Extending…';
+
+                  PowerShareAPI.extendRental(rental.id, newDueDate)
+                    .then(() => {
+                      PowerShare.toast('Rental extended', 'success');
+                      window.location.reload();
+                    })
+                    .catch((err) => {
+                      PowerShare.toast(err.message || 'Could not extend rental', 'error');
+                      this.disabled = false;
+                      this.textContent = 'Extend rental';
+                    });
+                });
+              }
+            })
+            .catch(() => {
+              root.innerHTML = `<p class="text-muted" style="padding:12px 4px">Couldn't load this rental right now.</p>`;
+            });
         }
       </script>
     </main>

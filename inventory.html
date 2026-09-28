@@ -186,7 +186,7 @@
               description: document.getElementById('add-description').value.trim() || null,
             };
 
-            if (!payload.model || !payload.name || !payload.categoryId || !payload.capacityWh || !payload.rentalPricePerDay || payload.depositAmount === '') {
+            if (!payload.model || !payload.name || !payload.categoryId || !payload.capacityWh || !payload.rentalPricePerDay || !payload.depositAmount) {
               PowerShare.toast('Fill in model, name, category, capacity, rate and deposit', 'error');
               return;
             }

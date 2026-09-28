@@ -40,6 +40,12 @@
 
     const isDark = theme === 'dark';
 
+    /*
+     * The stylesheet's dark-mode rules are all written against
+     * `html.dark-mode` (see css/style.css), so that is the class
+     * that must actually be toggled here.
+     */
+    root.classList.toggle('dark-mode', isDark);
     root.classList.toggle('dark', isDark);
     body.classList.toggle('dark-mode', isDark);
 
@@ -340,6 +346,96 @@
       'Price': 'Theko',
       'Date': 'Letšatši',
       'Time': 'Nako'
+    },
+
+    /*
+     * The selector on settings.html has always offered Afrikaans,
+     * isiXhosa and isiZulu alongside Sepedi, but only the Sepedi
+     * ("nso") dictionary was ever written — choosing any of the
+     * other three silently did nothing. These are machine-checked
+     * best-effort translations for the strings currently tagged
+     * with data-i18n; it's worth having a home-language speaker
+     * proofread them before this ships for real users.
+     */
+    af: {
+      'Home': 'Tuis',
+      'Batteries': 'Batterye',
+      'Rentals': 'Huurwerk',
+      'My Rentals': 'My Huurwerk',
+      'Notifications': 'Kennisgewings',
+      'Profile': 'Profiel',
+      'Settings': 'Instellings',
+      'About': 'Oor ons',
+      'Support': 'Ondersteuning',
+      'Appearance': 'Voorkoms',
+      'Dark mode': 'Donker modus',
+      'Preferences': 'Voorkeure',
+      'Language': 'Taal',
+      'English': 'Engels',
+      'Sepedi': 'Sepedi',
+      'Afrikaans': 'Afrikaans',
+      'isiXhosa': 'isiXhosa',
+      'isiZulu': 'isiZulu',
+      'Push notifications': 'Stoot-kennisgewings',
+      'Email updates': 'E-pos-opdaterings',
+      'Privacy Policy': 'Privaatheidsbeleid',
+      'Terms of Service': 'Diensbepalings',
+      'No notifications': 'Geen kennisgewings nie',
+      'You are all caught up.': 'Jy is op datum.'
+    },
+
+    xh: {
+      'Home': 'Ikhaya',
+      'Batteries': 'Iibhetri',
+      'Rentals': 'Ukuqeshisa',
+      'My Rentals': 'Ukuqeshisa Kwam',
+      'Notifications': 'Izaziso',
+      'Profile': 'Iprofayile',
+      'Settings': 'Iisethingi',
+      'About': 'Malunga',
+      'Support': 'Inkxaso',
+      'Appearance': 'Inkangeleko',
+      'Dark mode': 'Imowudi emnyama',
+      'Preferences': 'Uluhlu Lokukhetha',
+      'Language': 'Ulwimi',
+      'English': 'IsiNgesi',
+      'Sepedi': 'IsiPedi',
+      'Afrikaans': 'IsiBhulu',
+      'isiXhosa': 'isiXhosa',
+      'isiZulu': 'isiZulu',
+      'Push notifications': 'Izaziso Ezitsheziswayo',
+      'Email updates': 'Uhlaziyo Lwe-imeyile',
+      'Privacy Policy': 'Umgaqo-nkqubo Wabucala',
+      'Terms of Service': 'Imigaqo Yenkonzo',
+      'No notifications': 'Akukho zaziso',
+      'You are all caught up.': 'Ukwazi konke okukhoyo.'
+    },
+
+    zu: {
+      'Home': 'Ikhaya',
+      'Batteries': 'Amabhethri',
+      'Rentals': 'Ukuqashiswa',
+      'My Rentals': 'Ukuqashiswa Kwami',
+      'Notifications': 'Izaziso',
+      'Profile': 'Iphrofayela',
+      'Settings': 'Izilungiselelo',
+      'About': 'Mayelana',
+      'Support': 'Ukwesekwa',
+      'Appearance': 'Ukubukeka',
+      'Dark mode': 'Imodi Emnyama',
+      'Preferences': 'Okuncanyelwayo',
+      'Language': 'Ulimi',
+      'English': 'IsiNgisi',
+      'Sepedi': 'IsiPedi',
+      'Afrikaans': 'IsiBhunu',
+      'isiXhosa': 'isiXhosa',
+      'isiZulu': 'isiZulu',
+      'Push notifications': 'Izaziso Ezisukumayo',
+      'Email updates': 'Izibuyekezo Ze-imeyili',
+      'Privacy Policy': 'Inqubomgomo Yobumfihlo',
+      'Terms of Service': 'Imigomo Yesevisi',
+      'No notifications': 'Azikho izaziso',
+      'You are all caught up.': 'Usulandele konke.'
     }
   };
 
@@ -464,7 +560,7 @@
     document.addEventListener('click', function (event) {
 
       const button = event.target.closest(
-        '[data-back], [data-back-button], .back-button, .btn-back'
+        '[data-back], [data-back-button], .back-button, .btn-back, .back-btn'
       );
 
       if (!button) {
@@ -679,14 +775,61 @@ function initSheets() {
 
     document.addEventListener('click', function (event) {
 
+      /*
+       * The markup actually used across the app is a
+       * `.tab-row[data-panels="group"]` of
+       * `button[data-target="panelName"]` elements, paired with
+       * `[data-panel-group="group"][data-panel="panelName"]`
+       * content panels (see my-rentals.html, booking.html,
+       * bookings.html) — not the `[data-tab]`/`[data-tabs]`
+       * convention this used to look for.
+       */
       const tab = event.target.closest(
-        '[data-tab]'
+        '.tab-row [data-target], [data-tabs] [data-tab]'
       );
 
       if (!tab) {
         return;
       }
 
+      const row = tab.closest('.tab-row');
+
+      if (row) {
+
+        const groupName = row.dataset.panels;
+        const target = tab.dataset.target;
+
+        row
+          .querySelectorAll('[data-target]')
+          .forEach(item =>
+            item.classList.remove('active')
+          );
+
+        tab.classList.add('active');
+
+        if (groupName && target) {
+
+          document
+            .querySelectorAll(
+              `[data-panel-group="${groupName}"]`
+            )
+            .forEach(panel => {
+
+              panel.style.display =
+                panel.dataset.panel === target
+                  ? ''
+                  : 'none';
+
+            });
+        }
+
+        return;
+      }
+
+      /*
+       * Legacy [data-tabs]/[data-tab] convention, kept for
+       * backward compatibility.
+       */
       const group = tab.closest(
         '[data-tabs]'
       );
@@ -731,7 +874,7 @@ function initSheets() {
     document.addEventListener('click', function (event) {
 
       const button = event.target.closest(
-        '[data-password-toggle], [data-toggle-password]'
+        '[data-password-toggle], [data-toggle-password], .toggle-visibility'
       );
 
       if (!button) {
@@ -740,34 +883,52 @@ function initSheets() {
 
       event.preventDefault();
 
+      /*
+       * Prefer an explicit target id, but most of these buttons
+       * (login.html, register.html) only carry the bare
+       * data-password-toggle attribute with no value, or no
+       * data attribute at all — just a .toggle-visibility class
+       * sitting next to the password input inside the same
+       * .input-wrap. Fall back to that sibling relationship so
+       * the button still works either way.
+       */
       const targetId =
         button.dataset.passwordToggle ||
         button.dataset.togglePassword;
 
-      if (!targetId) {
-        return;
-      }
-
-      const input =
-        document.getElementById(targetId);
+      const input = targetId ?
+        document.getElementById(targetId) :
+        button.closest('.input-wrap')?.querySelector(
+          'input[type="password"], input[type="text"].password-field'
+        );
 
       if (!input) {
         return;
       }
 
+      const icon = button.querySelector(
+        '.material-icons-outlined, .material-icons'
+      );
+
       if (input.type === 'password') {
 
         input.type = 'text';
 
-        button.textContent =
-          'visibility_off';
+        if (icon) {
+          icon.textContent = 'visibility_off';
+        } else {
+          button.textContent = 'visibility_off';
+        }
 
       } else {
 
         input.type = 'password';
 
-        button.textContent =
-          'visibility';
+        if (icon) {
+          icon.textContent = 'visibility';
+        } else {
+          button.textContent = 'visibility';
+        }
       }
     });
   }
@@ -781,6 +942,63 @@ function initSheets() {
 
     document.addEventListener('click', function (event) {
 
+      /*
+       * The convention actually used in the markup (see the
+       * quantity control on booking.html) is a `.stepper`
+       * container carrying `data-min`/`data-max`, a
+       * `.qty-value` display span, and buttons marked
+       * `data-step="inc"`/`data-step="dec"` — not the
+       * `[data-stepper]` convention this used to look for
+       * exclusively, which no page actually uses.
+       */
+      const stepButton = event.target.closest(
+        '.stepper [data-step]'
+      );
+
+      if (stepButton) {
+
+        const stepper = stepButton.closest('.stepper');
+        const display = stepper.querySelector('.qty-value');
+
+        if (!display) {
+          return;
+        }
+
+        let value = parseInt(display.textContent, 10) || 0;
+
+        const min = parseInt(stepper.dataset.min, 10);
+        const max = parseInt(stepper.dataset.max, 10);
+
+        if (stepButton.dataset.step === 'inc') {
+          value++;
+        } else if (stepButton.dataset.step === 'dec') {
+          value--;
+        }
+
+        if (!Number.isNaN(min)) {
+          value = Math.max(value, min);
+        }
+
+        if (!Number.isNaN(max)) {
+          value = Math.min(value, max);
+        }
+
+        display.textContent = value;
+
+        stepper.dispatchEvent(
+          new CustomEvent('stepchange', {
+            bubbles: true,
+            detail: { value }
+          })
+        );
+
+        return;
+      }
+
+      /*
+       * Legacy [data-stepper] convention, kept for backward
+       * compatibility.
+       */
       const button = event.target.closest(
         '[data-stepper]'
       );
@@ -935,20 +1153,7 @@ function initSheets() {
   // NOTIFICATION BADGE
   // ============================================================
 
-  function updateNotificationBadge() {
-
-    if (
-      typeof PowerShare === 'undefined' ||
-      !Array.isArray(PowerShare.NOTIFICATIONS)
-    ) {
-      return;
-    }
-
-    const unread =
-      PowerShare.NOTIFICATIONS.filter(
-        notification =>
-          !notification.read
-      ).length;
+  function renderUnreadCount(unread) {
 
     document
       .querySelectorAll('[data-unread-count]')
@@ -956,15 +1161,75 @@ function initSheets() {
 
         if (unread > 0) {
 
-          element.textContent = unread;
-          element.style.display = '';
+          element.textContent =
+            unread > 9 ? '9+' : unread;
+
+          element.style.display = 'flex';
 
         } else {
 
+          element.textContent = '';
           element.style.display = 'none';
         }
       });
   }
+
+  function updateNotificationBadge() {
+
+    const badges = document.querySelectorAll(
+      '[data-unread-count]'
+    );
+
+    if (!badges.length) {
+      return;
+    }
+
+    /*
+     * The badge used to read from PowerShare.NOTIFICATIONS, a
+     * hard-coded mock list — so it always showed the same 2
+     * "unread" items regardless of what notifications actually
+     * exist. It now asks the real API for the current unread
+     * count, the same source the notifications page itself uses,
+     * and simply hides itself if that isn't available.
+     */
+    if (
+      typeof PowerShareAPI === 'undefined' ||
+      typeof PowerShareAPI.getMyNotifications !== 'function'
+    ) {
+      renderUnreadCount(0);
+      return;
+    }
+
+    PowerShareAPI.getMyNotifications(true)
+      .then(unread => {
+        renderUnreadCount(
+          Array.isArray(unread) ? unread.length : 0
+        );
+      })
+      .catch(() => {
+        renderUnreadCount(0);
+      });
+  }
+
+  /*
+   * Other scripts (e.g. the notifications page after "mark all as
+   * read") call this so the number in the nav never goes stale.
+   * It is also refreshed when the tab regains focus or the page is
+   * restored from the back/forward cache.
+   */
+  window.refreshNotificationBadge = updateNotificationBadge;
+
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) {
+      updateNotificationBadge();
+    }
+  });
+
+  window.addEventListener('pageshow', function (event) {
+    if (event.persisted) {
+      updateNotificationBadge();
+    }
+  });
 
 
   // ============================================================

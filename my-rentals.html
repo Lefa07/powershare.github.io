@@ -14,6 +14,7 @@
   
 </head>
 <body class="">
+  <script src="js/powershare-api.js"></script>
   <script src="js/main.js"></script>
   <script src="js/navigation.js"></script>
   <script src="js/animations.js"></script>
@@ -42,19 +43,37 @@
       </div>
 
       <script>
+        function fmtDate(d) {
+          if (!d) return '—';
+          return new Date(d).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+
+        /*
+         * The backend only models rental status as ACTIVE / OVERDUE /
+         * RETURNED / COMPLETED — there's no "upcoming" state. An approved
+         * booking's rental starts life as ACTIVE with collectedAt still
+         * null (the admin hasn't handed the battery over yet), so that's
+         * used as the "upcoming vs. active" split for this screen.
+         */
+        function bucketFor(r) {
+          if (r.status === 'RETURNED' || r.status === 'COMPLETED') return 'completed';
+          if (r.status === 'OVERDUE') return 'overdue';
+          if (r.status === 'ACTIVE') return r.collectedAt ? 'active' : 'upcoming';
+          return 'active';
+        }
+
         function rentalCard(r) {
-          const battery = PowerShare.findBattery(r.batteryId);
-          const badgeMap = { active: 'badge-active', upcoming: 'badge-pending', completed: 'badge-completed' };
-          const labelMap = { active: 'Active', upcoming: 'Upcoming', completed: 'Completed' };
+          const badgeMap = { active: 'badge-active', upcoming: 'badge-pending', completed: 'badge-completed', overdue: 'badge-unavailable' };
+          const labelMap = { active: 'Active', upcoming: 'Upcoming', completed: 'Completed', overdue: 'Overdue' };
           return `
             <a href="rental-details.html?id=${r.id}" class="card rental-card card--hover">
-              <div class="rental-thumb"><span class="material-icons-outlined">${battery.icon}</span></div>
+              <div class="rental-thumb"><span class="material-icons-outlined">battery_full</span></div>
               <div style="flex:1">
-                <div class="row-between"><h4>${battery.name}</h4><span class="badge ${badgeMap[r.status]}">${labelMap[r.status]}</span></div>
-                <p style="margin-top:2px">${r.id} &middot; ${r.start} &rarr; ${r.end}</p>
+                <div class="row-between"><h4>${r.batteryName}</h4><span class="badge ${badgeMap[r.bucket]}">${labelMap[r.bucket]}</span></div>
+                <p style="margin-top:2px">${r.id} &middot; ${fmtDate(r.startDate)} &rarr; ${fmtDate(r.dueDate)}</p>
                 <div class="row-between" style="margin-top:6px">
                   <span class="text-muted" style="font-size:12.5px">Total</span>
-                  <strong style="font-size:13.5px">R${r.total}</strong>
+                  <strong style="font-size:13.5px">${r.totalPrice != null ? `R${r.totalPrice}` : '—'}</strong>
                 </div>
               </div>
             </a>`;
@@ -64,35 +83,62 @@
           return `<div class="empty-state"><span class="material-icons-outlined">inbox</span><h4>No ${label} rentals</h4><p>Batteries you rent will show up here.</p></div>`;
         }
 
-        const active = PowerShare.RENTALS.filter(r => r.status === 'active');
-        const upcoming = PowerShare.RENTALS.filter(r => r.status === 'upcoming');
-        const completed = PowerShare.RENTALS.filter(r => r.status === 'completed');
+        PowerShareAPI.getMyProfile()
+          .catch(() => { window.location.href = 'login.html'; });
 
-        document.getElementById('panel-active').innerHTML = active.map(rentalCard).join('') || emptyState('active');
-        document.getElementById('panel-upcoming').innerHTML = upcoming.map(rentalCard).join('') || emptyState('upcoming');
-        document.getElementById('panel-completed').innerHTML = completed.map(rentalCard).join('') || emptyState('completed');
+        Promise.all([
+          PowerShareAPI.getMyRentals(),
+          PowerShareAPI.getMyBookings()
+        ])
+          .then(([rentals, bookings]) => {
+            const bookingsById = new Map(bookings.map(b => [b.id, b]));
+
+            const enriched = rentals.map((r) => {
+              const booking = bookingsById.get(r.bookingId);
+              return {
+                ...r,
+                startDate: booking ? booking.startDate : null,
+                totalPrice: booking ? booking.totalPrice : null,
+                bucket: bucketFor(r)
+              };
+            });
+
+            const active = enriched.filter(r => r.bucket === 'active' || r.bucket === 'overdue');
+            const upcoming = enriched.filter(r => r.bucket === 'upcoming');
+            const completed = enriched.filter(r => r.bucket === 'completed');
+
+            document.getElementById('panel-active').innerHTML = active.map(rentalCard).join('') || emptyState('active');
+            document.getElementById('panel-upcoming').innerHTML = upcoming.map(rentalCard).join('') || emptyState('upcoming');
+            document.getElementById('panel-completed').innerHTML = completed.map(rentalCard).join('') || emptyState('completed');
+          })
+          .catch(() => {
+            ['panel-active', 'panel-upcoming', 'panel-completed'].forEach((id) => {
+              document.getElementById(id).innerHTML =
+                `<p class="text-muted" style="padding:12px 4px">Couldn't load your rentals right now.</p>`;
+            });
+          });
       </script>
     </main>
   <nav class="bottom-nav" aria-label="Primary">
     <a href="home.html" class="">
       <span class="material-icons-outlined">home</span>
-      Home
+      <span data-i18n="Home">Home</span>
     </a>
     <a href="battery-catalogue.html" class="">
       <span class="material-icons-outlined">battery_charging_full</span>
-      Batteries
+      <span data-i18n="Batteries">Batteries</span>
     </a>
     <a href="my-rentals.html" class="active">
       <span class="material-icons-outlined">receipt_long</span>
-      Rentals
+      <span data-i18n="Rentals">Rentals</span>
     </a>
     <a href="notifications.html" class="">
       <span class="material-icons-outlined">notifications</span>
-      Notifications<span class="nav-badge" data-unread-count style="display:none"></span>
+      <span data-i18n="Notifications">Notifications</span><span class="nav-badge" data-unread-count style="display:none"></span>
     </a>
     <a href="profile.html" class="">
       <span class="material-icons-outlined">person</span>
-      Profile
+      <span data-i18n="Profile">Profile</span>
     </a>
   </nav>
   </div>

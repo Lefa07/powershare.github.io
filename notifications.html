@@ -107,7 +107,7 @@
 
         function renderNotifications(list) {
           const root = document.getElementById('notif-list');
-          root.innerHTML = list.length ? list.slice(0, 5).map(n => `
+          root.innerHTML = list.length ? list.slice(0, 30).map(n => `
             <div class="card row" style="gap:12px;${n.isRead ? 'opacity:0.65' : ''}">
               <span class="material-icons-outlined" style="color:${colorMap[n.type] || 'var(--color-primary)'};font-size:26px">${iconMap[n.type] || 'notifications'}</span>
               <div style="flex:1">
@@ -119,24 +119,56 @@
         }
 
         let notifications = [];
-        Promise.all([
-          PowerShareAPI.getMyBookings(),
-          PowerShareAPI.getMyNotifications(false)
-        ]).then(async ([bookings, updates]) => {
-          const progress = await Promise.all((bookings || []).slice(0, 10).map(b => PowerShareAPI.getBookingProgress(b.id)));
-          renderProgress(progress.filter(Boolean));
-          notifications = updates || [];
-          renderNotifications(notifications);
-        }).catch(() => {
-          document.getElementById('progress-list').innerHTML = '<div class="empty-state"><h4>Could not load booking progress</h4><p>Please try again.</p></div>';
-          renderNotifications(notifications);
-        });
+
+        /*
+         * Booking progress and the updates list are loaded separately.
+         * They used to be chained in one Promise.all, so if any single
+         * booking-progress call failed the whole chain was abandoned and
+         * the (already fetched) updates - e.g. "your booking was
+         * rejected" - were never drawn.
+         */
+        function loadProgress() {
+          return PowerShareAPI.getMyBookings()
+            .then(bookings => Promise.all(
+              (bookings || []).slice(0, 10).map(b =>
+                PowerShareAPI.getBookingProgress(b.id).catch(() => null))
+            ))
+            .then(progress => renderProgress(progress.filter(Boolean)))
+            .catch(() => {
+              document.getElementById('progress-list').innerHTML = '<div class="empty-state"><h4>Could not load booking progress</h4><p>Please try again.</p></div>';
+            });
+        }
+
+        function loadUpdates() {
+          return PowerShareAPI.getMyNotifications(false)
+            .then(updates => {
+              notifications = updates || [];
+              renderNotifications(notifications);
+            })
+            .catch(() => {
+              document.getElementById('notif-list').innerHTML = '<p class="text-muted">Could not load updates. Please try again.</p>';
+            })
+            .finally(() => {
+              if (window.refreshNotificationBadge) window.refreshNotificationBadge();
+            });
+        }
+
+        function refreshAll() {
+          loadProgress();
+          loadUpdates();
+        }
+
+        refreshAll();
+        // Pick up admin actions (approved / rejected) without a manual reload.
+        setInterval(() => { if (!document.hidden) refreshAll(); }, 20000);
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshAll(); });
 
         document.getElementById('mark-read-btn').addEventListener('click', async () => {
           try {
             await Promise.all(notifications.filter(n => !n.isRead).map(n => PowerShareAPI.markNotificationRead(n.id)));
             notifications.forEach(n => n.isRead = true);
             renderNotifications(notifications);
+            if (window.refreshNotificationBadge) window.refreshNotificationBadge();
             PowerShare.toast('Updates marked as read', 'success');
           } catch (err) {
             PowerShare.toast(err.message || 'Could not update notifications', 'error');
@@ -147,23 +179,23 @@
   <nav class="bottom-nav" aria-label="Primary">
     <a href="home.html" class="">
       <span class="material-icons-outlined">home</span>
-      Home
+      <span data-i18n="Home">Home</span>
     </a>
     <a href="battery-catalogue.html" class="">
       <span class="material-icons-outlined">battery_charging_full</span>
-      Batteries
+      <span data-i18n="Batteries">Batteries</span>
     </a>
     <a href="my-rentals.html" class="">
       <span class="material-icons-outlined">receipt_long</span>
-      Rentals
+      <span data-i18n="Rentals">Rentals</span>
     </a>
     <a href="notifications.html" class="active">
       <span class="material-icons-outlined">notifications</span>
-      Notifications<span class="nav-badge" data-unread-count style="display:none"></span>
+      <span data-i18n="Notifications">Notifications</span><span class="nav-badge" data-unread-count style="display:none"></span>
     </a>
     <a href="profile.html" class="">
       <span class="material-icons-outlined">person</span>
-      Profile
+      <span data-i18n="Profile">Profile</span>
     </a>
   </nav>
   </div>

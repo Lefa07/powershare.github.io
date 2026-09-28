@@ -132,15 +132,7 @@
           })
           .catch(() => { window.location.href = 'login.html'; });
 
-        PowerShareAPI.getMyNotifications(true)
-          .then((unread) => {
-            if (unread.length === 0) return;
-            document.querySelectorAll('[data-unread-count]').forEach((el) => {
-              el.textContent = unread.length;
-              el.style.display = 'flex';
-            });
-          })
-          .catch(() => {}); // notifications are a nice-to-have here, not worth failing the page over
+        // The nav badge (data-unread-count) is populated by navigation.js.
 
         const featuredEl = document.getElementById('featured-list');
         const availabilityCountEl = document.getElementById('available-battery-count');
@@ -167,23 +159,23 @@
   <nav class="bottom-nav" aria-label="Primary">
     <a href="home.html" class="active">
       <span class="material-icons-outlined">home</span>
-      Home
+      <span data-i18n="Home">Home</span>
     </a>
     <a href="battery-catalogue.html" class="">
       <span class="material-icons-outlined">battery_charging_full</span>
-      Batteries
+      <span data-i18n="Batteries">Batteries</span>
     </a>
     <a href="my-rentals.html" class="">
       <span class="material-icons-outlined">receipt_long</span>
-      Rentals
+      <span data-i18n="Rentals">Rentals</span>
     </a>
     <a href="notifications.html" class="">
       <span class="material-icons-outlined">notifications</span>
-      Notifications<span class="nav-badge" data-unread-count style="display:none"></span>
+      <span data-i18n="Notifications">Notifications</span><span class="nav-badge" data-unread-count style="display:none"></span>
     </a>
     <a href="profile.html" class="">
       <span class="material-icons-outlined">person</span>
-      Profile
+      <span data-i18n="Profile">Profile</span>
     </a>
   </nav>
   </div>

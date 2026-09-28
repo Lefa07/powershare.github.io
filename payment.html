@@ -124,22 +124,64 @@
       </div>
 
       <script>
-        const booking = PowerShare.store.get('currentBooking');
+        /*
+         * currentBooking normally comes from localStorage, set by
+         * booking.html right before it redirects here. But some contexts
+         * (Safari private browsing, some embedded WebViews) silently block
+         * localStorage writes - the booking is still created on the
+         * backend, but the local reference to it is lost, and this page
+         * used to just declare "no active booking" even though a real,
+         * payable booking exists. booking.html now also passes the id in
+         * the URL, so that case can recover by re-fetching it here.
+         */
+        let booking = PowerShare.store.get('currentBooking');
         const summaryEl = document.getElementById('booking-summary');
         const totalDue = document.getElementById('total-due');
+        const params = new URLSearchParams(window.location.search);
+        const urlBookingId = params.get('bookingId');
 
-        if (booking?.bookingId) {
-          const total = Number(booking.total || 0);
-          totalDue.textContent = `R${total.toFixed(2)}`;
-          summaryEl.innerHTML = `
-            <div class="row-between"><span class="text-muted">Booking</span><strong>#${booking.bookingId}</strong></div>
-            <div class="row-between"><span class="text-muted">Battery</span><strong>${String(booking.batteryName || '')}</strong></div>
-            <div class="row-between"><span class="text-muted">Dates</span><strong>${booking.start} → ${booking.end}</strong></div>
-            <div class="row-between"><span class="text-muted">Quantity</span><strong>${booking.qty || 1}</strong></div>
-          `;
-        } else {
-          summaryEl.innerHTML = '<p>No active booking. Please return to the battery catalogue.</p>';
+        function renderSummary() {
+          const btn = document.getElementById('pay-btn');
+          const existingLink = document.getElementById('browse-batteries-link');
+          if (existingLink) existingLink.remove();
+
+          if (booking?.bookingId) {
+            const total = Number(booking.total || 0);
+            totalDue.textContent = `R${total.toFixed(2)}`;
+            summaryEl.innerHTML = `
+              <div class="row-between"><span class="text-muted">Booking</span><strong>#${booking.bookingId}</strong></div>
+              <div class="row-between"><span class="text-muted">Battery</span><strong>${String(booking.batteryName || '')}</strong></div>
+              <div class="row-between"><span class="text-muted">Dates</span><strong>${booking.start} → ${booking.end}</strong></div>
+              <div class="row-between"><span class="text-muted">Quantity</span><strong>${booking.qty || 1}</strong></div>
+            `;
+            btn.disabled = false;
+            btn.innerHTML = '<span class="material-icons-outlined" style="font-size:18px">lock</span> Pay securely';
+          } else {
+            summaryEl.innerHTML = '<p>No active booking was found for this session. Start a booking from the battery catalogue, then come back here to pay.</p>';
+            btn.disabled = true;
+            btn.innerHTML = 'No active booking';
+            // The reason above can be easy to miss once you have scrolled past
+            // it, so it's repeated right beside the button that stopped working.
+            btn.insertAdjacentHTML('afterend',
+              '<a href="battery-catalogue.html" id="browse-batteries-link" class="btn btn-outline btn-block" style="margin-top:10px">Browse batteries</a>');
+          }
+        }
+
+        if (urlBookingId && String(booking?.bookingId) !== String(urlBookingId)) {
           document.getElementById('pay-btn').disabled = true;
+          summaryEl.innerHTML = '<p class="text-muted">Loading your booking…</p>';
+          PowerShareAPI.getBooking(urlBookingId)
+            .then((b) => {
+              booking = {
+                bookingId: b.id, batteryId: b.batteryId, batteryName: b.batteryName,
+                qty: b.quantity, start: b.startDate, end: b.endDate, total: Number(b.totalPrice || 0)
+              };
+              PowerShare.store.set('currentBooking', booking);
+              renderSummary();
+            })
+            .catch(() => renderSummary());
+        } else {
+          renderSummary();
         }
 
         const numberInput = document.getElementById('card-number');
@@ -238,8 +280,13 @@
               paymentMethod: method,
               paymentCompleted: true
             });
-            window.location.href = 'booking-confirmation.html';
+            window.location.href = `booking-confirmation.html?bookingId=${booking.bookingId}`;
           } catch (err) {
+            if (err.requiresLogin) {
+              PowerShare.toast('Your session has expired. Please log in again.', 'error');
+              setTimeout(() => { window.location.href = 'login.html'; }, 1000);
+              return;
+            }
             PowerShare.toast(err.message || 'Payment could not be processed', 'error');
             payBtn.disabled = false;
             payBtn.innerHTML = '<span class="material-icons-outlined" style="font-size:18px">lock</span> Pay securely';
