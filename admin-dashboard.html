@@ -150,7 +150,24 @@
                 icon.textContent = 'notifications_active';
                 icon.title = `${notifications.length} unread admin notification${notifications.length === 1 ? '' : 's'}`;
                 icon.style.color = 'var(--color-accent-dark)';
-                icon.onclick = () => PowerShare.toast(notifications[0].message, 'default', 'notifications');
+                // Clicking the bell used to only show a toast and never
+                // mark anything as read. Since "have I seen this" was
+                // tracked purely in a page-local variable that resets on
+                // every navigation away from and back to this page (a real
+                // reload each time), the same already-handled notification
+                // kept getting flagged as "new" again on every return visit
+                // - looking exactly like a fresh booking that doesn't
+                // actually exist. Marking them read server-side means a
+                // notification can only ever trigger the "new" toast once,
+                // no matter how many times the dashboard is reloaded.
+                icon.onclick = async () => {
+                  const message = notifications[0]?.message;
+                  try {
+                    await Promise.all(notifications.map(n => PowerShareAPI.markNotificationRead(n.id)));
+                  } catch (err) { /* best-effort - still show the message below */ }
+                  if (message) PowerShare.toast(message, 'default', 'notifications');
+                  loadDashboard();
+                };
                 if (dashboardLoadedOnce) {
                   const newNotification = notifications.find(n => !knownAdminNotificationIds.has(n.id));
                   if (newNotification) PowerShare.toast(newNotification.message, 'default', 'notifications');

@@ -52,8 +52,13 @@
             ? '<span class="badge badge-available"><span class="material-icons">check_circle</span>Available now</span>'
             : '<span class="badge badge-unavailable"><span class="material-icons">block</span>Unavailable</span>';
 
+          const photo = PowerShareAPI.imageForCategory(battery.category?.name);
+          const hero = photo
+            ? `<div class="card" style="padding:0;overflow:hidden"><img src="${photo}" alt="${battery.name}" style="width:100%;height:220px;object-fit:cover;display:block"></div>`
+            : `<div class="card" style="text-align:center;padding:32px 16px"><span class="material-icons" style="font-size:88px;color:var(--color-primary)">${PowerShareAPI.iconForCategory(battery.category?.name)}</span></div>`;
+
           root.innerHTML = `
-            <div class="card" style="text-align:center;padding:32px 16px"><span class="material-icons" style="font-size:88px;color:var(--color-primary)">${PowerShareAPI.iconForCategory(battery.category?.name)}</span></div>
+            ${hero}
             <div class="row-between" style="margin-top:20px"><div><span class="eyebrow">${battery.category?.name || 'Battery'}</span><h1 style="margin-top:2px">${battery.name}</h1></div><div class="charge-ring charge-ring--sm" style="--charge-pct:${chargePct}%"><span class="charge-value">${chargePct}%</span></div></div>
             <div style="margin-top:8px">${statusBadge}</div>
             <div class="card stack-3" style="margin-top:20px">

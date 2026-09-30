@@ -96,6 +96,7 @@
   position: relative;
 }
 .battery-card .battery-img .material-icons { font-size: 56px; color: var(--color-primary); opacity: 0.85; }
+.battery-card .battery-img img { width: 100%; height: 100%; object-fit: cover; }
 .battery-card .battery-body { padding: var(--sp-3) var(--sp-4) var(--sp-4); }
 .battery-card h4 { margin-bottom: 2px; }
 .battery-card .price-row { display: flex; align-items: baseline; gap: 4px; margin-top: var(--sp-2); }

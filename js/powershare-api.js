@@ -63,18 +63,42 @@ const PowerShareAPI = (() => {
     }
 
 
-    const response =
-      await fetch(
-        `${BASE_URL}${path}`,
-        {
-          method,
-          headers,
-          body:
-            body !== undefined
-              ? JSON.stringify(body)
-              : undefined
-        }
+    /*
+     * fetch() itself throws (not a rejected HTTP status - an actual
+     * exception) for network failures, a blocked CORS request, or the
+     * request timing out. Left unhandled, that surfaces to the calling
+     * page as a raw browser string like "Failed to fetch" or "Load
+     * failed" with no indication of what actually went wrong, on every
+     * API call in the app - payment included. This turns it into the
+     * same kind of Error the rest of request() throws, with a message
+     * that's actually actionable.
+     */
+    let response;
+    try {
+
+      response =
+        await fetch(
+          `${BASE_URL}${path}`,
+          {
+            method,
+            headers,
+            body:
+              body !== undefined
+                ? JSON.stringify(body)
+                : undefined
+          }
+        );
+
+    } catch (networkError) {
+
+      const error = new Error(
+        'Could not reach the PowerShare server. Check your internet connection - ' +
+        'if the server has been idle it can take up to a minute to wake up, so it is ' +
+        'worth waiting a moment and trying again.'
       );
+      error.networkError = true;
+      throw error;
+    }
 
 
     if (response.status === 204) {
@@ -617,6 +641,55 @@ const PowerShareAPI = (() => {
 
 
       return 'battery_full';
+
+    },
+
+
+    /*
+     * Real product photos for the three seeded categories (Compact ->
+     * RIVER 2, Portable -> DELTA 2, Heavy Duty -> DELTA Pro). Any
+     * category an admin adds beyond those three has no photo, so
+     * callers must keep the iconForCategory() rendering as a fallback
+     * rather than assume this always returns something.
+     */
+    imageForCategory: (
+      categoryName
+    ) => {
+
+      const name =
+        (
+          categoryName || ''
+        ).toLowerCase();
+
+
+      if (
+        name.includes('compact')
+      ) {
+
+        return 'images/batteries/river2.jpg';
+
+      }
+
+
+      if (
+        name.includes('heavy')
+      ) {
+
+        return 'images/batteries/deltapro.jpg';
+
+      }
+
+
+      if (
+        name.includes('portable')
+      ) {
+
+        return 'images/batteries/delta2.jpg';
+
+      }
+
+
+      return null;
 
     },
 

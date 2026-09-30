@@ -88,6 +88,15 @@
           return '<span class="badge badge-unavailable"><span class="material-icons">block</span>Unavailable</span>';
         }
 
+        // Real product photos exist for the three seeded categories; any
+        // other category (an admin could add more) falls back to the icon.
+        function batteryImageHtml(categoryName, size) {
+          const photo = PowerShareAPI.imageForCategory(categoryName);
+          return photo
+            ? `<img src="${photo}" alt="${categoryName || 'Battery'}" loading="lazy">`
+            : `<span class="material-icons" style="font-size:${size}px">${PowerShareAPI.iconForCategory(categoryName)}</span>`;
+        }
+
         function render() {
           const query = searchInput.value.trim().toLowerCase();
           const list = allBatteries.filter(b => {
@@ -98,7 +107,7 @@
           resultCount.textContent = `${list.length} batter${list.length === 1 ? 'y' : 'ies'} found`;
           grid.innerHTML = list.map(b => `
             <a href="battery-details.html?id=${b.id}" class="battery-card battery-card--row card--hover">
-              <div class="battery-img"><span class="material-icons">${PowerShareAPI.iconForCategory(b.category.name)}</span></div>
+              <div class="battery-img">${batteryImageHtml(b.category.name, 56)}</div>
               <div class="battery-body">
                 <div class="row-between"><h4>${b.name}</h4></div>
                 <p style="margin-top:2px">${b.capacityWh}Wh &middot; ${b.runtimeHours ?? '—'} hrs</p>

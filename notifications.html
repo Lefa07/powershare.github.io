@@ -11,7 +11,11 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/responsive.css">
-  
+  <style>
+    #progress-list details summary::-webkit-details-marker { display: none; }
+    #progress-list details .details-chevron { transition: transform 150ms; }
+    #progress-list details[open] .details-chevron { transform: rotate(180deg); }
+  </style>
 </head>
 <body class="">
   <script src="js/powershare-api.js"></script>
@@ -75,16 +79,32 @@
 
           root.innerHTML = progressItems.map(item => {
             const completed = item.steps.filter(s => s.status === 'complete').length;
+            // Collapsed by default - just enough to know where each booking
+            // stands at a glance. Clicking it opens the full step-by-step
+            // timeline below, instead of every booking's timeline being
+            // shown fully expanded all at once.
+            const current = item.steps.find(s => s.status === 'current')
+              || item.steps.find(s => s.status === 'cancelled');
+            const statusLabel = current
+              ? esc(current.label)
+              : (completed === item.steps.length ? 'Completed' : '');
+            const statusColor = current && current.status === 'cancelled'
+              ? 'var(--color-error)'
+              : 'var(--color-text-muted)';
+
             return `
-              <div class="card">
-                <div class="row-between">
-                  <div>
+              <details class="card" style="padding:0">
+                <summary style="list-style:none;cursor:pointer;padding:16px;display:flex;align-items:center;gap:12px">
+                  <span class="material-icons-outlined" style="color:${statusColor};flex-shrink:0">${current && current.status === 'cancelled' ? 'cancel' : 'local_shipping'}</span>
+                  <div style="flex:1;min-width:0">
                     <span class="text-muted" style="font-size:11px">POWERBANK RENTAL #${esc(item.bookingId)}</span>
-                    <h3 style="margin-top:3px">${esc(item.batteryName)}</h3>
+                    <h4 style="margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(item.batteryName)}</h4>
+                    ${statusLabel ? `<p class="text-muted" style="font-size:12px;margin-top:2px">${statusLabel}</p>` : ''}
                   </div>
-                  <span class="badge">${completed}/${item.steps.length}</span>
-                </div>
-                <div style="margin-top:18px">
+                  <span class="badge" style="flex-shrink:0">${completed}/${item.steps.length}</span>
+                  <span class="material-icons-outlined details-chevron" style="flex-shrink:0;color:var(--color-text-muted)">expand_more</span>
+                </summary>
+                <div style="padding:0 16px 18px">
                   ${item.steps.map((step, index) => `
                     <div style="display:flex;gap:12px;position:relative;padding-bottom:${index === item.steps.length-1 ? '0' : '16px'}">
                       ${index < item.steps.length-1 ? '<span style="position:absolute;left:12px;top:25px;bottom:0;width:2px;background:var(--color-border,#E0E0E0)"></span>' : ''}
@@ -101,7 +121,7 @@
                       </div>
                     </div>`).join('')}
                 </div>
-              </div>`;
+              </details>`;
           }).join('');
         }
 

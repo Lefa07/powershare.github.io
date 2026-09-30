@@ -130,8 +130,12 @@
         }
 
         function renderBattery() {
+          const photo = PowerShareAPI.imageForCategory(battery.category?.name);
+          const thumb = photo
+            ? `<img src="${photo}" alt="${battery.name}" style="width:56px;height:56px;border-radius:var(--radius-sm);object-fit:cover;flex-shrink:0">`
+            : `<span class="material-icons" style="font-size:40px;color:var(--color-primary)">${PowerShareAPI.iconForCategory(battery.category?.name)}</span>`;
           document.getElementById('summary-card').innerHTML = `
-            <span class="material-icons" style="font-size:40px;color:var(--color-primary)">${PowerShareAPI.iconForCategory(battery.category?.name)}</span>
+            ${thumb}
             <div><span class="eyebrow">${battery.category?.name || 'Battery'}</span><h4>${battery.name}</h4><p style="margin-top:2px">R${battery.rentalPricePerDay} /day</p></div>`;
           document.getElementById('pickup-location').textContent = 'PowerShare hub';
           renderPrice();
