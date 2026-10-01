@@ -63,10 +63,10 @@
         }
 
         function rentalCard(r) {
-          const badgeMap = { active: 'badge-active', upcoming: 'badge-pending', completed: 'badge-completed', overdue: 'badge-unavailable' };
-          const labelMap = { active: 'Active', upcoming: 'Upcoming', completed: 'Completed', overdue: 'Overdue' };
+          const badgeMap = { active: 'badge-active', upcoming: 'badge-pending', completed: 'badge-completed', overdue: 'badge-unavailable', pending: 'badge-pending' };
+          const labelMap = { active: 'Active', upcoming: 'Upcoming', completed: 'Completed', overdue: 'Overdue', pending: 'Pending approval' };
           return `
-            <a href="rental-details.html?id=${r.id}" class="card rental-card card--hover">
+            <a href="${r.href || `rental-details.html?id=${r.id}`}" class="card rental-card card--hover">
               <div class="rental-thumb"><span class="material-icons-outlined">battery_full</span></div>
               <div style="flex:1">
                 <div class="row-between"><h4>${r.batteryName}</h4><span class="badge ${badgeMap[r.bucket]}">${labelMap[r.bucket]}</span></div>
@@ -103,8 +103,29 @@
               };
             });
 
+            /*
+             * A booking only becomes a Rental once an admin approves it - so a
+             * booking that's just been paid for and is still awaiting approval
+             * has no rental to show here at all, even though the customer very
+             * reasonably expects to see it immediately after paying. These are
+             * shown as their own "Pending approval" cards in Upcoming, linking
+             * to the notifications page's tracker rather than rental-details
+             * (which needs a real rental id that doesn't exist yet).
+             */
+            const pending = bookings
+              .filter(b => b.status === 'PENDING')
+              .map(b => ({
+                id: `Booking #${b.id}`,
+                batteryName: b.batteryName,
+                startDate: b.startDate,
+                dueDate: b.endDate,
+                totalPrice: b.totalPrice,
+                bucket: 'pending',
+                href: 'notifications.html'
+              }));
+
             const active = enriched.filter(r => r.bucket === 'active' || r.bucket === 'overdue');
-            const upcoming = enriched.filter(r => r.bucket === 'upcoming');
+            const upcoming = [...pending, ...enriched.filter(r => r.bucket === 'upcoming')];
             const completed = enriched.filter(r => r.bucket === 'completed');
 
             document.getElementById('panel-active').innerHTML = active.map(rentalCard).join('') || emptyState('active');

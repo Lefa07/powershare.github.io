@@ -45,6 +45,12 @@
         const batteryId = params.get('id');
         const root = document.getElementById('details-root');
 
+        if (!batteryId) {
+
+          root.innerHTML = `<div class="empty-state"><span class="material-icons-outlined">error_outline</span><h4>No battery selected</h4><p>Go back and pick a battery from the catalogue.</p></div>`;
+
+        } else {
+
         PowerShareAPI.getBattery(batteryId).then(battery => {
           const chargePct = PowerShareAPI.conditionToChargePct(battery.condition);
           const available = battery.status === 'AVAILABLE';
@@ -75,8 +81,10 @@
           if (!available) bookBtn.addEventListener('click', e => e.preventDefault());
           root.appendChild(bookBtn);
         }).catch(err => {
-          root.innerHTML = `<div class="empty-state"><span class="material-icons-outlined">battery_unknown</span><h4>Could not load battery</h4><p>${err.message || 'Please try again.'}</p></div>`;
+          root.innerHTML = `<div class="empty-state"><span class="material-icons-outlined">error_outline</span><h4>Could not load battery</h4><p>${err.message || 'Please try again.'}</p></div>`;
         });
+
+        }
       </script>
     </main>
 

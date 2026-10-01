@@ -86,8 +86,8 @@
           </button>
         </div>
         <table class="data-table">
-          <thead><tr><th>Battery</th><th>Model</th><th>Category</th><th>Condition</th><th>Status</th><th>Daily rate</th></tr></thead>
-          <tbody id="inventory-body"><tr><td colspan="6" style="text-align:center;color:var(--color-text-muted);padding:24px">Loading…</td></tr></tbody>
+          <thead><tr><th>Battery</th><th>Model</th><th>Category</th><th>Condition</th><th>Status</th><th>Daily rate</th><th>Action</th></tr></thead>
+          <tbody id="inventory-body"><tr><td colspan="7" style="text-align:center;color:var(--color-text-muted);padding:24px">Loading…</td></tr></tbody>
         </table>
 
         <div class="overlay" id="add-battery-sheet">
@@ -147,7 +147,52 @@
                 <td>${b.condition}</td>
                 <td>${statusBadge(b.status)}</td>
                 <td>R${b.rentalPricePerDay}/day</td>
-              </tr>`).join('') || `<tr><td colspan="6" style="text-align:center;color:var(--color-text-muted);padding:24px">No batteries in this view</td></tr>`;
+                <td>${b.status === 'AVAILABLE'
+                  ? '<span class="text-muted" style="font-size:12px">—</span>'
+                  : `<button class="btn btn-outline btn-sm mark-available-btn" data-id="${b.id}">Mark available</button>`}</td>
+              </tr>`).join('') || `<tr><td colspan="7" style="text-align:center;color:var(--color-text-muted);padding:24px">No batteries in this view</td></tr>`;
+
+            document.querySelectorAll('.mark-available-btn').forEach((btn) => {
+              btn.onclick = function () {
+                const battery = allBatteries.find(b => String(b.id) === this.dataset.id);
+                if (!battery) return;
+
+                this.disabled = true;
+                this.textContent = 'Updating…';
+
+                /*
+                 * UpdateBatteryRequest requires the full record, not a partial
+                 * patch - so the rest of the battery's existing data is sent
+                 * back unchanged, with only status overridden to AVAILABLE.
+                 * This is the actual fix for a battery stuck as RESERVED/
+                 * RENTED after its booking/rental rows were removed directly
+                 * in the database rather than through the app (which would
+                 * normally reset this automatically on reject/cancel/return).
+                 */
+                PowerShareAPI.admin.updateBattery(battery.id, {
+                  categoryId: battery.category.id,
+                  model: battery.model,
+                  name: battery.name,
+                  capacityWh: battery.capacityWh,
+                  runtimeHours: battery.runtimeHours,
+                  rentalPricePerDay: battery.rentalPricePerDay,
+                  depositAmount: battery.depositAmount,
+                  status: 'AVAILABLE',
+                  condition: battery.condition,
+                  description: battery.description,
+                  imageUrl: battery.imageUrl
+                })
+                  .then(() => {
+                    PowerShare.toast(`${battery.name} marked available`, 'success');
+                    loadInventory();
+                  })
+                  .catch((err) => {
+                    PowerShare.toast(err.message || 'Could not update battery', 'error');
+                    this.disabled = false;
+                    this.textContent = 'Mark available';
+                  });
+              };
+            });
           }
 
           function loadInventory() {

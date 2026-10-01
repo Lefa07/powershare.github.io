@@ -14,6 +14,7 @@
   
 </head>
 <body class="">
+  <script src="js/powershare-api.js"></script>
   <script src="js/main.js"></script>
   <script src="js/navigation.js"></script>
   <script src="js/animations.js"></script>
@@ -68,13 +69,38 @@
       </div>
 
       <script>
+        function fmtDate(d) {
+          if (!d) return '—';
+          return new Date(d).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+
         const params = new URLSearchParams(window.location.search);
-        const rental = PowerShare.RENTALS.find(r => r.id === params.get('id')) || PowerShare.RENTALS[0];
-        const battery = PowerShare.findBattery(rental.batteryId);
-        document.getElementById('return-summary').innerHTML = `
-          <span class="material-icons" style="font-size:40px;color:var(--color-primary)">${battery.icon}</span>
-          <div><h4>${battery.name}</h4><p style="margin-top:2px">${rental.id} &middot; due back ${rental.end}</p></div>
-        `;
+        const rentalId = params.get('id');
+        const summaryEl = document.getElementById('return-summary');
+        const submitBtn = document.getElementById('submit-return');
+
+        if (!rentalId) {
+
+          summaryEl.innerHTML = `<p>No rental was specified. Go back to My Rentals and use the Return battery button on the rental you're returning.</p>`;
+          submitBtn.disabled = true;
+
+        } else {
+
+          summaryEl.innerHTML = `<p class="text-muted">Loading…</p>`;
+          submitBtn.disabled = true;
+
+          PowerShareAPI.getRental(rentalId)
+            .then(rental => {
+              summaryEl.innerHTML = `
+                <span class="material-icons" style="font-size:40px;color:var(--color-primary)">battery_full</span>
+                <div><h4>${rental.batteryName}</h4><p style="margin-top:2px">Rental #${rental.id} · due back ${fmtDate(rental.dueDate)}</p></div>
+              `;
+              submitBtn.disabled = false;
+            })
+            .catch(err => {
+              summaryEl.innerHTML = `<p>${err.message || 'Could not load this rental.'}</p>`;
+            });
+        }
 
         document.getElementById('upload-input').addEventListener('change', function () {
           if (this.files.length) document.getElementById('upload-label').textContent = this.files[0].name + ' added';
@@ -88,9 +114,15 @@
           });
         });
 
-        document.getElementById('submit-return').addEventListener('click', () => {
-          PowerShare.toast('Return submitted — thanks for choosing PowerShare!', 'success');
-          setTimeout(() => window.location.href = 'my-rentals.html', 700);
+        // Actually confirming a return (POST /returns) is an admin-only action on
+        // the backend - it's the admin physically inspecting the battery at
+        // hand-back, not something the customer's own account is authorized to
+        // call. So this doesn't pretend to submit anything server-side; it's a
+        // checklist for the customer to bring to the hub, and the actual return
+        // gets recorded from the admin's "Process return" action instead.
+        submitBtn.addEventListener('click', () => {
+          PowerShare.toast('Noted — bring the battery and this checklist to the hub to complete your return.', 'success');
+          setTimeout(() => window.location.href = 'my-rentals.html', 1200);
         });
       </script>
     </main>

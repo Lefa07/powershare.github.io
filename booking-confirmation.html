@@ -27,10 +27,11 @@
     <main class="screen screen--no-nav">
       <div class="screen-content" style="text-align:center;padding-top:40px">
         <div class="success-badge"><span class="material-icons">check</span></div>
-        <h1 style="margin-top:20px">Booking confirmed!</h1>
-        <p style="margin-top:6px">Show the QR code at the hub to collect your battery.</p>
+        <h1 style="margin-top:20px">Payment successful!</h1>
+        <p style="margin-top:6px">Your booking has been paid for and is now pending admin approval. You'll get a notification once it's reviewed.</p>
 
         <div class="qr-box"><span class="material-icons">qr_code_2</span></div>
+        <p class="text-muted" style="margin-top:4px;font-size:12.5px">Show this QR code at the hub once your booking is approved, to collect your battery.</p>
         <div class="eyebrow" id="booking-number">Booking PS-00000</div>
 
         <div class="card stack-1" style="margin-top:24px;text-align:left" id="receipt"></div>
@@ -49,8 +50,6 @@
         function renderReceipt() {
           const bookingNumber = booking?.bookingId ? `Booking #${booking.bookingId}` : 'Booking submitted';
           document.getElementById('booking-number').textContent = bookingNumber;
-          document.querySelector('h1').textContent = 'Booking request submitted';
-          document.querySelector('.screen-content > p').textContent = 'Your payment was recorded. The booking is now pending admin approval.';
           const receipt = document.getElementById('receipt');
           if (booking) {
             receipt.innerHTML = `

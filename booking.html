@@ -150,17 +150,23 @@
         end.addEventListener('change', recalcDays);
         document.querySelector('.stepper').addEventListener('stepchange', e => { qty = e.detail.value; renderPrice(); });
 
-        PowerShareAPI.getBattery(batteryId)
-          .then(data => {
-            battery = data;
-            if (battery.status !== 'AVAILABLE') throw new Error('This battery is no longer available for booking');
-            renderBattery();
-          })
-          .catch(err => {
-            document.getElementById('summary-card').innerHTML = `<p>${err.message || 'Could not load this battery.'}</p>`;
-            document.getElementById('continue-btn').style.pointerEvents = 'none';
-            document.getElementById('continue-btn').style.opacity = '.5';
-          });
+        if (!batteryId) {
+          document.getElementById('summary-card').innerHTML = `<p>No battery selected. Go back and pick one from the catalogue.</p>`;
+          document.getElementById('continue-btn').style.pointerEvents = 'none';
+          document.getElementById('continue-btn').style.opacity = '.5';
+        } else {
+          PowerShareAPI.getBattery(batteryId)
+            .then(data => {
+              battery = data;
+              if (battery.status !== 'AVAILABLE') throw new Error('This battery is no longer available for booking');
+              renderBattery();
+            })
+            .catch(err => {
+              document.getElementById('summary-card').innerHTML = `<p>${err.message || 'Could not load this battery.'}</p>`;
+              document.getElementById('continue-btn').style.pointerEvents = 'none';
+              document.getElementById('continue-btn').style.opacity = '.5';
+            });
+        }
 
         document.getElementById('continue-btn').addEventListener('click', async e => {
           e.preventDefault();
