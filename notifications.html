@@ -51,13 +51,17 @@
           BOOKING_CREATED: 'event',
           BOOKING_APPROVED: 'check_circle',
           BOOKING_REJECTED: 'cancel',
-          PAYMENT_SUCCESSFUL: 'payments'
+          PAYMENT_SUCCESSFUL: 'payments',
+          RENTAL_COLLECTED: 'local_shipping',
+          RETURN_CONFIRMED: 'assignment_turned_in'
         };
         const colorMap = {
           BOOKING_CREATED: 'var(--color-accent-dark)',
           BOOKING_APPROVED: 'var(--color-success)',
           BOOKING_REJECTED: 'var(--color-error)',
-          PAYMENT_SUCCESSFUL: 'var(--color-primary)'
+          PAYMENT_SUCCESSFUL: 'var(--color-primary)',
+          RENTAL_COLLECTED: 'var(--color-primary)',
+          RETURN_CONFIRMED: 'var(--color-success)'
         };
 
         const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({
