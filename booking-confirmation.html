@@ -44,39 +44,76 @@
 
       <script>
         let booking = PowerShare.store.get('currentBooking');
+        const lastPayment = PowerShare.store.get('lastPayment');
         const params = new URLSearchParams(window.location.search);
         const urlBookingId = params.get('bookingId');
+
+        function fmtDateTime(d) {
+          if (!d) return '';
+          return new Date(d).toLocaleString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
 
         function renderReceipt() {
           const bookingNumber = booking?.bookingId ? `Booking #${booking.bookingId}` : 'Booking submitted';
           document.getElementById('booking-number').textContent = bookingNumber;
           const receipt = document.getElementById('receipt');
           if (booking) {
+            // lastPayment is only shown when it actually belongs to this
+            // booking - if the page was reopened for an older booking, an
+            // unrelated payment from a previous session shouldn't appear here.
+            const payment = (lastPayment && String(lastPayment.bookingId) === String(booking.bookingId)) ? lastPayment : null;
             receipt.innerHTML = `
               <div class="receipt-line"><span>Battery</span><span>${booking.batteryName}</span></div>
               <div class="receipt-line"><span>Quantity</span><span>${booking.qty}</span></div>
               <div class="receipt-line"><span>Rental period</span><span>${booking.start} → ${booking.end}</span></div>
-              <div class="receipt-line"><span>Total</span><span>R${Number(booking.total || 0).toFixed(2)}</span></div>
               <div class="divider" style="margin:6px 0"></div>
-              <div class="receipt-line"><span style="font-weight:700;color:var(--color-text)">Status</span><span style="font-weight:700;color:var(--color-accent-dark)">Pending approval</span></div>`;
+              ${payment ? `
+              <div class="receipt-line"><span>Transaction ID</span><span style="font-family:monospace">${payment.transactionReference}</span></div>
+              <div class="receipt-line"><span>Payment method</span><span>${payment.method}</span></div>
+              <div class="receipt-line"><span>Paid at</span><span>${fmtDateTime(payment.paymentDate)}</span></div>
+              <div class="receipt-line"><span>Amount paid</span><span>R${Number(payment.amount || 0).toFixed(2)}</span></div>
+              ` : `
+              <div class="receipt-line"><span>Total</span><span>R${Number(booking.total || 0).toFixed(2)}</span></div>
+              `}
+              <div class="divider" style="margin:6px 0"></div>
+              <div class="receipt-line"><span style="font-weight:700;color:var(--color-text)">Booking status</span><span style="font-weight:700;color:var(--color-accent-dark)">Pending approval</span></div>`;
           }
         }
 
-        // Same localStorage fallback as payment.html - see the comment there.
-        if (urlBookingId && String(booking?.bookingId) !== String(urlBookingId)) {
-          PowerShareAPI.getBooking(urlBookingId)
-            .then((b) => {
-              booking = {
-                bookingId: b.id, batteryId: b.batteryId, batteryName: b.batteryName,
-                qty: b.quantity, start: b.startDate, end: b.endDate, total: Number(b.totalPrice || 0)
-              };
-              PowerShare.store.set('currentBooking', booking);
-              renderReceipt();
-            })
-            .catch(() => renderReceipt());
-        } else {
-          renderReceipt();
+        function toBookingShape(b) {
+          return {
+            bookingId: b.id, batteryId: b.batteryId, batteryName: b.batteryName,
+            qty: b.quantity, start: b.startDate, end: b.endDate, total: Number(b.totalPrice || 0)
+          };
         }
+
+        // Same resolution order as payment.html - see the comment there for why.
+        function resolveBooking() {
+          if (urlBookingId) {
+            return PowerShareAPI.getBooking(urlBookingId).then(toBookingShape);
+          }
+          if (booking?.bookingId) {
+            return Promise.resolve(booking);
+          }
+          return PowerShareAPI.getMyBookings()
+            .then((bookings) => {
+              const pending = (bookings || []).filter(b => b.status === 'PENDING').sort((a, b) => b.id - a.id);
+              return pending.length ? toBookingShape(pending[0]) : null;
+            })
+            .catch(() => null);
+        }
+
+        resolveBooking()
+          .then((resolved) => {
+            booking = resolved;
+            if (booking) PowerShare.store.set('currentBooking', booking);
+          })
+          .catch(() => {
+            // Same reasoning as payment.html: never leave this page silently
+            // stuck - any resolution failure must still render something.
+            booking = null;
+          })
+          .then(renderReceipt);
       </script>
     </main>
 

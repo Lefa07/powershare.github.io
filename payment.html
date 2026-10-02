@@ -167,22 +167,60 @@
           }
         }
 
-        if (urlBookingId && String(booking?.bookingId) !== String(urlBookingId)) {
-          document.getElementById('pay-btn').disabled = true;
-          summaryEl.innerHTML = '<p class="text-muted">Loading your booking…</p>';
-          PowerShareAPI.getBooking(urlBookingId)
-            .then((b) => {
-              booking = {
-                bookingId: b.id, batteryId: b.batteryId, batteryName: b.batteryName,
-                qty: b.quantity, start: b.startDate, end: b.endDate, total: Number(b.totalPrice || 0)
-              };
-              PowerShare.store.set('currentBooking', booking);
-              renderSummary();
-            })
-            .catch(() => renderSummary());
-        } else {
-          renderSummary();
+        function toBookingShape(b) {
+          return {
+            bookingId: b.id, batteryId: b.batteryId, batteryName: b.batteryName,
+            qty: b.quantity, start: b.startDate, end: b.endDate, total: Number(b.totalPrice || 0)
+          };
         }
+
+        /*
+         * Resolution order:
+         *  1. The URL's bookingId is authoritative when present - always
+         *     re-fetch from the backend rather than trust a stale localStorage
+         *     copy that happens to share the same id.
+         *  2. No URL id, but localStorage already has one - use it.
+         *  3. Neither is available (e.g. this tab was reopened/refreshed
+         *     directly rather than arrived at via a fresh redirect from
+         *     booking.html, so there was never a URL id to begin with, and
+         *     localStorage may not have survived either) - ask the backend
+         *     for this customer's own most recent still-payable (PENDING)
+         *     booking instead of giving up. This is what actually closes the
+         *     "No active booking" dead end for good: it no longer depends on
+         *     any one handoff mechanism working.
+         */
+        function resolveBooking() {
+          if (urlBookingId) {
+            return PowerShareAPI.getBooking(urlBookingId).then(toBookingShape);
+          }
+          if (booking?.bookingId) {
+            return Promise.resolve(booking);
+          }
+          return PowerShareAPI.getMyBookings()
+            .then((bookings) => {
+              const pending = (bookings || [])
+                .filter(b => b.status === 'PENDING')
+                .sort((a, b) => b.id - a.id);
+              return pending.length ? toBookingShape(pending[0]) : null;
+            })
+            .catch(() => null);
+        }
+
+        document.getElementById('pay-btn').disabled = true;
+        summaryEl.innerHTML = '<p class="text-muted">Loading your booking…</p>';
+        resolveBooking()
+          .then((resolved) => {
+            booking = resolved;
+            if (booking) PowerShare.store.set('currentBooking', booking);
+          })
+          .catch(() => {
+            // Any failure while resolving (a stale/invalid id in the URL, a
+            // network error, anything) must still reach renderSummary() below
+            // instead of leaving the page stuck on "Loading..." with the pay
+            // button disabled forever and no visible explanation why.
+            booking = null;
+          })
+          .then(renderSummary);
 
         const numberInput = document.getElementById('card-number');
         const expiryInput = document.getElementById('card-expiry');
@@ -273,13 +311,18 @@
           payBtn.disabled = true;
           payBtn.textContent = 'Processing…';
           try {
-            await PowerShareAPI.pay(booking.bookingId, method);
+            const result = await PowerShareAPI.pay(booking.bookingId, method);
             // Only store non-sensitive payment metadata. Never store card number/CVC.
             PowerShare.store.set('currentBooking', {
               ...booking,
               paymentMethod: method,
               paymentCompleted: true
             });
+            // The backend's PaymentResponse already carries everything the
+            // confirmation screen needs to show (transactionReference, amount,
+            // method, status) - stored separately so booking-confirmation.html
+            // can display it without re-fetching.
+            PowerShare.store.set('lastPayment', result);
             window.location.href = `booking-confirmation.html?bookingId=${booking.bookingId}`;
           } catch (err) {
             if (err.requiresLogin) {
